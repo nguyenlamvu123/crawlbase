@@ -2,9 +2,9 @@ import time, threading
 import tkinter as tk
 
 from funct import (
-    # chrooome, readfile, findelem, clickkk, dangnhap, thich, spam, root,text_widget,
+    # chrooome, readfile, findelem, clickkk, dangnhap, thich, spam, root, text_widget,
     print_on_gui, delete_cache, getin4, stopandkillthread, brow__ser, gethtmlslist_bycategories, crawlfromhtml,
-    product_in_detail,
+    gethtmlslist_bysearch, product_in_detail,
 )
 
 
@@ -50,6 +50,7 @@ def mult_thre():
 
 if __name__ == '__main__':
     gethtmlslist_bycategories()
+    # gethtmlslist_bysearch(keyword="%C4%91%E1%BB%93%20ch%C6%A1i")
     crawlfromhtml()
     product_in_detail()
     # # num_threads: int = 4
