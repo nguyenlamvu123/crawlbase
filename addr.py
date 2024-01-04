@@ -1,20 +1,17 @@
-ad: str = "https://shopee.vn/"
+# ad: str = "https://shopee.vn/search?facet=11036946&keyword=do%20choi&noCorrection=true&page=0"
+ad: str = "https://shopee.vn"
+danhmuc_s: list = [
+    '/Đồ-Chơi-cat.11036932',
+]
+page: str = '?page='
+loca_l: str = r'C:\Users\HLC\Downloads'
+prename: str = 'Mua sắm online sản phẩm'
 
-em: str = '//input[@id="email"]'
-em_test: str = "61550352894850"
-pa: str = '//input[@id="pass"]'
-pa_test: str = "3099547944"
-lo: str = '//button[@name="login"]'
-get_tok: str = 'LQ7D4WZ74V34ZRJ2D3CXAQTAP6M6E7MJ'
-to: str = '//input[@class="inputtext"]'
-fanpage: str = "/juice24h"
-switchpage: str = '//div[@aria-label="Switch Now" or @aria-label="Chuyển ngay"]'
-like: str = '//div[@aria-label="Thích" or @aria-label="Like"]'
-
-comment: str = '//div[@contenteditable="true"]'
-# comment: str = '//form[@role="presentation"]',  # selenium.common.exceptions.ElementNotInteractableException
-# comment: str = "//p[@class='xdj266r x11i5rnm xat24cr x1mh8g0r']"
-# comment: str = '//div[@aria-label="Viết bình luận..."]'
+classthongtin: str = "JxvxgB"
+classten: str = "efwNRW"
+classdanhgiadaban: str = "DN6Jp1"
+datasqe_danhgia: str = "rating"
+classdaban: str = "OwmBnn"
 
 uidfile: str = "uid.txt"
 contentfile: str = "du_lieu.txt"
