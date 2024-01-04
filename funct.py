@@ -11,7 +11,7 @@ import time, os, random, requests
 from addr import (
     # em, pa, em_test, pa_test, lo, get_tok, to, fanpage, comment, like,
     uidfile, contentfile, spam_done, get_in4, likl_ist, ad, danhmuc_s, page,
-    loca_l, prename, classthongtin, classten, classdanhgiadaban, datasqe_danhgia, classdaban,
+    loca_l, prename, classsanpham, classthongtin, classten, classdanhgiadaban, datasqe_danhgia, classdaban,
 )
 
 
@@ -31,6 +31,16 @@ def readfile(file="uid.txt", mod="r", cont: str or None = None) -> list or str o
             file.write(cont)
 
 
+def gethtmlslist_bycategories():
+    # https://shopee.vn/Đồ-Chơi-cat.11036932
+    for danhmuc in danhmuc_s:
+        url_: str = ad + danhmuc
+        for trang in range(9):
+            url: str = url_ + page + str(trang) if trang > 0 else url_
+            brow__ser(url=url)
+            time.sleep(15)
+
+
 def crawlfromhtml():
     from bs4 import BeautifulSoup
     for html in [s for s in os.listdir(loca_l) if s.startswith(prename)]:
@@ -40,7 +50,7 @@ def crawlfromhtml():
             mod="_r"
         )
         htMl = BeautifulSoup(contents, 'html.parser')
-        sanpham_s = htMl.find_all('li', {"class": lambda x: x and "shopee-search" in x})
+        sanpham_s = htMl.find_all('li', {"class": lambda x: x and classsanpham in x})
         for sanpham in sanpham_s:
             link = sanpham.find('a', {"href": True});
             print(link.get("href"))
@@ -220,15 +230,6 @@ def getin4():
 
 def stopandkillthread():  # TODO
     pass
-
-
-def gethtmlslist():
-    for danhmuc in danhmuc_s:
-        url_: str = ad + danhmuc
-        for trang in range(9):
-            url: str = url_ + page + str(trang) if trang > 0 else url_
-            brow__ser(url=url)
-            time.sleep(15)
 
 
 # def dangnhap(text_widget, email=em_test, passw=pa_test, falivetok=get_tok):
