@@ -3,7 +3,7 @@ import tkinter as tk
 
 from funct import (
     # chrooome, readfile, findelem, clickkk, dangnhap, thich, spam,
-    print_on_gui, delete_cache, getin4, stopandkillthread, brow__ser, gethtmlslist, crawlfromhtml
+    print_on_gui, delete_cache, getin4, stopandkillthread, brow__ser, gethtmlslist_bycategories, crawlfromhtml
     # root,text_widget,
 )
 from addr import ad, danhmuc_s, page
@@ -50,8 +50,8 @@ def mult_thre():
 
 
 if __name__ == '__main__':
-    gethtmlslist()
-    # crawlfromhtml()
+    gethtmlslist_bycategories()
+    crawlfromhtml()
     # # num_threads: int = 4
     # # sema = threading.Semaphore(value=num_threads)
     # # Bsthread = tk.Button(
