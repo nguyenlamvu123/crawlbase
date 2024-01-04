@@ -1,33 +1,76 @@
+import os, time, json
+from tkinter import messagebox
+
+from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException
 from selenium.webdriver.common.action_chains import ActionChains
-from tkinter import messagebox
-import time, threading, pyautogui, os, random, requests, json
-import tkinter as tk
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 
 from addr import (
-    # em, pa, em_test, pa_test, lo, get_tok, to, fanpage, comment, like,
-    uidfile, contentfile, spam_done, get_in4, likl_ist, ad, danhmuc_s, page, debug,
-    loca_l, prename, classsanpham, classthongtin, classten, classdanhgiadaban, datasqe_danhgia, classdaban,
+    # em, pa, em_test, pa_test, lo, get_tok, to, fanpage, comment, like, uidfile, contentfile, spam_done, get_in4, likl_ist,
+    ad, danhmuc_s, page, looplv1, looplv2, debug, allproduct, classinprod_ten, classinprod_danhgia, classinprod_motadai,
+    loca_l, prename, amongname, classsanpham, classthongtin, classten, classdanhgiadaban, datasqe_danhgia, classdaban,
 )
 
 
-def readfile(file="uid.txt", mod="r", cont: str or None = None, json: bool = False):
+def readfile(file="uid.txt", mod="r", cont=None, jso: bool = False):
     if not mod == 'w':
         assert os.path.isfile(file)
     if mod == "r":
         with open(file, mod, encoding="utf-8") as file:
-            lines = file.readlines() if not json else json.load(file)
+            lines = file.readlines()
         return lines
     elif mod == "_r":
         with open(file, mod[1], encoding="utf-8") as file:
-            contents = file.read()
+            contents = file.read() if not jso else json.load(file)
         return contents
     elif mod == "w":
         with open(file, mod, encoding="utf-8") as file:
-            file.write(cont)
+            if not jso:
+                file.write(cont)
+            else:
+                json.dump(cont, file, indent=2, ensure_ascii=False)
+
+
+def html2bs4(product: bool = False):
+    html_s = [s for s in os.listdir(loca_l) if all([  # danh sách html các trang chi tiết sản phẩm
+        s.endswith('.html'),
+        amongname in s,  # tên file chứa chuỗi 'Shopee Việt Nam'
+        not s.startswith(prename),  # tên file không bắt đầu bằng chuỗi 'Mua sắm online sản phẩm'
+    ])] if product else [s for s in os.listdir(loca_l) if all([  # danh sách html các trang tổng
+        s.endswith('.html'),
+        amongname in s,  # tên file chứa chuỗi 'Shopee Việt Nam'
+        s.startswith(prename),  # tên file bắt đầu bằng chuỗi 'Mua sắm online sản phẩm'
+    ])]
+    for html in html_s:
+        print(html)
+        contents = readfile(
+            file=os.path.join(loca_l, html),
+            mod="_r"
+        )
+        htMl = BeautifulSoup(contents, 'html.parser')
+        yield htMl
+
+
+def gethtmlslist_byjson(jso: dict or None = None, i=0):
+    if jso is None:
+        jso: dict = readfile(
+            file=looplv1,
+            mod="_r",
+            jso=True,
+        )
+    for sanpham in jso:
+        if not allproduct:
+            i += 1
+            if i > 13:
+                break
+            if i < 7:
+                continue
+        jsodict: dict = jso[sanpham]
+        brow__ser(url=jsodict['link'])
+        time.sleep(15)
 
 
 def gethtmlslist_bycategories():
@@ -40,20 +83,33 @@ def gethtmlslist_bycategories():
             time.sleep(15)
 
 
-def product_in_detail(jso: dict):
-    pass
+def product_in_detail():
+    gethtmlslist_byjson()
+    jso: dict = dict()
+    for htMl in html2bs4(product=True):
+        ten_ = htMl.find('div', {"class": classinprod_ten})
+        tencuasanpham = ten_.find('span')
+        danhgia = htMl.find('div', {"class": classinprod_danhgia})
+        motadai_s = htMl.find_all('div', {"class": classinprod_motadai})
+        if debug:
+            print('tên:', tencuasanpham.text)
+            print(danhgia.text)
+
+        jso[tencuasanpham.text] = {
+            'đánh giá': danhgia.text,
+        }
+
+        for thutu, motadai in enumerate(motadai_s):
+            if debug:
+                print(motadai.text)
+            fie: str = 'mô tả dài ' + str(thutu)
+            jso[tencuasanpham.text][fie] = str(motadai)
+    readfile(file=looplv2, mod="w", cont=jso, jso=True)
 
 
 def crawlfromhtml():
-    from bs4 import BeautifulSoup
     jso: dict = dict()
-    for html in [s for s in os.listdir(loca_l) if s.startswith(prename)]:
-        print(html)
-        contents = readfile(
-            file=os.path.join(loca_l, html),
-            mod="_r"
-        )
-        htMl = BeautifulSoup(contents, 'html.parser')
+    for htMl in html2bs4():
         sanpham_s = htMl.find_all('li', {"class": lambda x: x and classsanpham in x})
         for sanpham in sanpham_s:
             link = sanpham.find('a', {"href": True})
@@ -88,7 +144,7 @@ def crawlfromhtml():
                 'số lượng đã bán': soluongdaban,
                 'hình ảnh': danhsachhinhanh,
             }
-    #TODO write jso dict 2 json file
+    readfile(file=looplv1, mod="w", cont=jso, jso=True)
 
 
 def findelem(driver, xpath, scroll: bool = True):
@@ -202,12 +258,10 @@ def phant():
     return webdriver.PhantomJS(desired_capabilities=PHANTOMJS_ARG)
 
 
-##    return webdriver.Firefox(
 def firefox(incog: bool = False):
 ##    https://stackoverflow.com/questions/66209119/automation-google-login-with-python-and-selenium-shows-this-browser-or-app-may
     # import geckodriver_autoinstaller
     # geckodriver_autoinstaller.install()
-    from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
     from selenium.webdriver.firefox.options import Options
     from selenium.webdriver.firefox.service import Service
 
