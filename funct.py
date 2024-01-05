@@ -4,29 +4,28 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException
 from selenium.webdriver.common.action_chains import ActionChains
 from tkinter import messagebox
-import time, threading, pyautogui
+import time, threading, pyautogui, os, random, requests, json
 import tkinter as tk
 
-import time, os, random, requests
 from addr import (
     # em, pa, em_test, pa_test, lo, get_tok, to, fanpage, comment, like,
-    uidfile, contentfile, spam_done, get_in4, likl_ist, ad, danhmuc_s, page,
+    uidfile, contentfile, spam_done, get_in4, likl_ist, ad, danhmuc_s, page, debug,
     loca_l, prename, classsanpham, classthongtin, classten, classdanhgiadaban, datasqe_danhgia, classdaban,
 )
 
 
-def readfile(file="uid.txt", mod="r", cont: str or None = None) -> list or str or None:
+def readfile(file="uid.txt", mod="r", cont: str or None = None, json: bool = False):
     if not mod == 'w':
         assert os.path.isfile(file)
     if mod == "r":
         with open(file, mod, encoding="utf-8") as file:
-            lines: list = file.readlines()
+            lines = file.readlines() if not json else json.load(file)
         return lines
     elif mod == "_r":
         with open(file, mod[1], encoding="utf-8") as file:
             contents = file.read()
         return contents
-    else:
+    elif mod == "w":
         with open(file, mod, encoding="utf-8") as file:
             file.write(cont)
 
@@ -41,8 +40,13 @@ def gethtmlslist_bycategories():
             time.sleep(15)
 
 
+def product_in_detail(jso: dict):
+    pass
+
+
 def crawlfromhtml():
     from bs4 import BeautifulSoup
+    jso: dict = dict()
     for html in [s for s in os.listdir(loca_l) if s.startswith(prename)]:
         print(html)
         contents = readfile(
@@ -52,21 +56,39 @@ def crawlfromhtml():
         htMl = BeautifulSoup(contents, 'html.parser')
         sanpham_s = htMl.find_all('li', {"class": lambda x: x and classsanpham in x})
         for sanpham in sanpham_s:
-            link = sanpham.find('a', {"href": True});
-            print(link.get("href"))
-            img_s = link.find_all('img', {'src': True});
-            print("len(img_s):", len(img_s))
-            # for img in img_s:
-            #     print(img.get('src'))
-            thongtin_s = link.find_all('div', {"class": classthongtin});
-            print("len(thongtin_s):", len(thongtin_s))
-            for thongtin in thongtin_s:
-                ten = thongtin.find('div', {"class": classten});
+            link = sanpham.find('a', {"href": True})
+            if debug:
+                print(link.get("href"))
+            duongdancuasanpham: str = link.get("href")
+            img_s = link.find_all('img', {'src': True})
+            if debug:
+                print("len(img_s):", len(img_s))
+
+            danhsachhinhanh: list = list()
+            for img in img_s:
+                danhsachhinhanh.append(img.get('src'))
+            thongtin_s = link.find_all('div', {"class": classthongtin})
+            if debug:
+                print("len(thongtin_s):", len(thongtin_s))
+            assert len(thongtin_s) == 1
+            thongtin = thongtin_s[0]
+            ten = thongtin.find('div', {"class": classten})
+            if debug:
                 print('ten:', ten.text)
-                danhgia_daban = thongtin.find('div', {"class": classdanhgiadaban})
-                danhgia = danhgia_daban.find('div', {"data-sqe": datasqe_danhgia})
-                daban = danhgia_daban.find('div', {"class": lambda x: x and classdaban in x});
+            tencuasanpham: str = ten.text
+            danhgia_daban = thongtin.find('div', {"class": classdanhgiadaban})
+            danhgia = danhgia_daban.find('div', {"data-sqe": datasqe_danhgia})
+            daban = danhgia_daban.find('div', {"class": lambda x: x and classdaban in x})
+            if debug:
                 print("đã bán:", daban.text)
+            soluongdaban: str = daban.text
+
+            jso[tencuasanpham] = {
+                'link': duongdancuasanpham,
+                'số lượng đã bán': soluongdaban,
+                'hình ảnh': danhsachhinhanh,
+            }
+    #TODO write jso dict 2 json file
 
 
 def findelem(driver, xpath, scroll: bool = True):

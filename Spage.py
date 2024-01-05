@@ -2,9 +2,9 @@ import time, threading, requests
 import tkinter as tk
 
 from funct import (
-    # chrooome, readfile, findelem, clickkk, dangnhap, thich, spam,
-    print_on_gui, delete_cache, getin4, stopandkillthread, brow__ser, gethtmlslist_bycategories, crawlfromhtml
-    # root,text_widget,
+    # chrooome, readfile, findelem, clickkk, dangnhap, thich, spam, root,text_widget,
+    print_on_gui, delete_cache, getin4, stopandkillthread, brow__ser, gethtmlslist_bycategories, crawlfromhtml,
+    product_in_detail,
 )
 from addr import ad, danhmuc_s, page
 
@@ -52,6 +52,7 @@ def mult_thre():
 if __name__ == '__main__':
     gethtmlslist_bycategories()
     crawlfromhtml()
+    product_in_detail()
     # # num_threads: int = 4
     # # sema = threading.Semaphore(value=num_threads)
     # # Bsthread = tk.Button(

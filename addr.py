@@ -1,5 +1,7 @@
-# ad: str = "https://shopee.vn/search?facet=11036946&keyword=do%20choi&noCorrection=true&page=0"
 ad: str = "https://shopee.vn"
+debug: bool = False
+
+
 danhmuc_s: list = [
     # "/Thời-Trang-Nam-cat.11035567",
     # "/Thời-Trang-Nữ-cat.11035639",
