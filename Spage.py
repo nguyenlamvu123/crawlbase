@@ -6,7 +6,6 @@ from funct import (
     print_on_gui, delete_cache, getin4, stopandkillthread, brow__ser, gethtmlslist_bycategories, crawlfromhtml,
     product_in_detail,
 )
-from addr import ad, danhmuc_s, page
 
 
 # Hàm thực thi cho mỗi luồng

@@ -1,5 +1,6 @@
 ad: str = "https://shopee.vn"
-debug: bool = False
+debug: bool = False  # active or inactive print()
+allproduct: bool = False  # crawl all product or just illustrate
 
 
 danhmuc_s: list = [
@@ -34,6 +35,7 @@ danhmuc_s: list = [
 page: str = '?page='
 loca_l: str = r'C:\Users\HLC\Downloads'
 prename: str = 'Mua sắm online sản phẩm'
+amongname: str = 'Shopee Việt Nam'
 
 classsanpham: str = "shopee-search"
 classthongtin: str = "JxvxgB"
@@ -42,8 +44,9 @@ classdanhgiadaban: str = "DN6Jp1"
 datasqe_danhgia: str = "rating"
 classdaban: str = "OwmBnn"
 
-uidfile: str = "uid.txt"
-contentfile: str = "du_lieu.txt"
-spam_done: str = "spam_done.txt"
-get_in4: str = "via.txt"
-likl_ist: str = "liklist.txt"
+classinprod_ten: str = "_44qnta"
+classinprod_danhgia: str = "_1k47d8 _046PXf"
+classinprod_motadai: str = "MCCLkq"
+
+looplv1: str = "looplv1.json"
+looplv2: str = "looplv2.json"
