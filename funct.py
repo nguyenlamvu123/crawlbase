@@ -2,14 +2,13 @@ import os, time, json
 from tkinter import messagebox
 
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
+# from selenium import webdriver
+# from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException
+# from selenium.webdriver.common.action_chains import ActionChains
+# from selenium.webdriver.common.by import By
+# from selenium.webdriver.common.keys import Keys
 
 from addr import (
-    # em, pa, em_test, pa_test, lo, get_tok, to, fanpage, comment, like, uidfile, contentfile, spam_done, get_in4, likl_ist,
     ad, danhmuc_s, page, looplv1, looplv2, debug, allproduct, classinprod_ten, classinprod_danhgia, classinprod_motadai,
     loca_l, prename, amongname, classsanpham, classthongtin, classten, classdanhgiadaban, datasqe_danhgia, classdaban,
 )
@@ -75,9 +74,10 @@ def gethtmlslist_byjson(jso: dict or None = None, i=0):
 
 def gethtmlslist_bycategories():
     # https://shopee.vn/Đồ-Chơi-cat.11036932
+    sotrang: int = 9 if allproduct else 2
     for danhmuc in danhmuc_s:
         url_: str = ad + danhmuc
-        for trang in range(9):
+        for trang in range(sotrang):
             url: str = url_ + page + str(trang) if trang > 0 else url_
             brow__ser(url=url)
             time.sleep(15)
