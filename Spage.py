@@ -1,4 +1,4 @@
-import time, threading, requests
+import time, threading
 import tkinter as tk
 
 from funct import (
