@@ -33,6 +33,8 @@ danhmuc_s: list = [
     # "/Dụng-cụ-và-thiết-bị-tiện-ích-cat.11116484",
 ]
 page: str = '?page='
+sear_ch: str = '&page='
+sear__ch: str = '/search?keyword='
 loca_l: str = r'C:\Users\HLC\Downloads'
 prename: str = 'Mua sắm online sản phẩm'
 amongname: str = 'Shopee Việt Nam'

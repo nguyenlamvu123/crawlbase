@@ -19,7 +19,7 @@ def readfile(file="uid.txt", mod="r", cont=None, jso: bool = False):
         assert os.path.isfile(file)
     if mod == "r":
         with open(file, mod, encoding="utf-8") as file:
-            lines = file.readlines()
+            lines: list = file.readlines()
         return lines
     elif mod == "_r":
         with open(file, mod[1], encoding="utf-8") as file:
@@ -83,6 +83,16 @@ def gethtmlslist_bycategories():
             time.sleep(15)
 
 
+def gethtmlslist_bysearch(keyword: str = "%C4%91%E1%BB%93%20ch%C6%A1i"):
+    # https://shopee.vn/search?keyword=%C4%91%E1%BB%93%20ch%C6%A1i&page=2
+    # https://shopee.vn/search?facet=11036954&keyword=%C4%91%E1%BB%93%20ch%C6%A1i&noCorrection=true&page=0
+    url_: str = ad + sear__ch + keyword
+    for trang in range(9):
+        url: str = url_ + sear_ch + str(trang)
+        brow__ser(url=url)
+        time.sleep(15)
+
+
 def product_in_detail():
     gethtmlslist_byjson()
     jso: dict = dict()
@@ -113,6 +123,8 @@ def crawlfromhtml():
         sanpham_s = htMl.find_all('li', {"class": lambda x: x and classsanpham in x})
         for sanpham in sanpham_s:
             link = sanpham.find('a', {"href": True})
+            if link is None:  # trường hợp javascrip chưa kịp sinh code html phía dưới
+                continue
             if debug:
                 print(link.get("href"))
             duongdancuasanpham: str = link.get("href")
@@ -262,6 +274,7 @@ def firefox(incog: bool = False):
 ##    https://stackoverflow.com/questions/66209119/automation-google-login-with-python-and-selenium-shows-this-browser-or-app-may
     # import geckodriver_autoinstaller
     # geckodriver_autoinstaller.install()
+    from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
     from selenium.webdriver.firefox.options import Options
     from selenium.webdriver.firefox.service import Service
 
