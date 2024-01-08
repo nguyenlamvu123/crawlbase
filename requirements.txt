@@ -1,8 +1,1 @@
-jupyter
-webdriver-manager==4.0.1
-selenium==4.13.0
-#opencv-python<=3.4.11.43
-#urllib3==2.0.6
-fake-useragent
-geckodriver-autoinstaller
-
+beautifulsoup4<=4.12.2
