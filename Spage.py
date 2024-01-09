@@ -2,11 +2,11 @@ import time, threading
 import tkinter as tk
 
 from funct import (
-    # chrooome, readfile, findelem, clickkk, dangnhap, thich, spam, root, text_widget,
+    # readfile, findelem, clickkk, dangnhap, thich, spam, root, text_widget,
     print_on_gui, delete_cache, getin4, stopandkillthread, brow__ser, gethtmlslist_bycategories, crawlfromhtml,
-    gethtmlslist_bysearch, product_in_detail,
+    gethtmlslist_bysearch, product_in_detail, chrooome,
 )
-
+from addr import tmdt
 
 # Hàm thực thi cho mỗi luồng
 # def work(email, passw, falivetok, fanpage):
@@ -49,10 +49,13 @@ def mult_thre():
 
 
 if __name__ == '__main__':
-    gethtmlslist_bycategories()
-    # gethtmlslist_bysearch(keyword="%C4%91%E1%BB%93%20ch%C6%A1i")
-    crawlfromhtml()
-    product_in_detail()
+    if tmdt == 'la':
+        gethtmlslist_bycategories()  # -> looplv1.json                             # crawl_Lazada
+    elif tmdt == 'sh':
+        gethtmlslist_bycategories()  # -> html files                               # crawl_shopee_by_html
+        # gethtmlslist_bysearch(keyword="%C4%91%E1%BB%93%20ch%C6%A1i")             # crawl_shopee_by_html
+        crawlfromhtml()  # -> looplv1.json                                         # crawl_shopee_by_html
+    product_in_detail()  # -> looplv2.json                                     # crawl_shopee_by_html
     # # num_threads: int = 4
     # # sema = threading.Semaphore(value=num_threads)
     # # Bsthread = tk.Button(
