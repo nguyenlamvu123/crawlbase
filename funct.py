@@ -1,16 +1,20 @@
-import os, time, json
+import json
+import os
+import pyautogui
+import time
 from tkinter import messagebox
 
 from bs4 import BeautifulSoup
-# from selenium import webdriver
-# from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException
-# from selenium.webdriver.common.action_chains import ActionChains
-# from selenium.webdriver.common.by import By
-# from selenium.webdriver.common.keys import Keys
+from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException, ElementClickInterceptedException
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 
 from addr import (
     ad, danhmuc_s, page, looplv1, looplv2, debug, allproduct, classinprod_ten, classinprod_danhgia, classinprod_motadai,
-    loca_l, prename, amongname, classsanpham, classthongtin, classten, classdanhgiadaban, datasqe_danhgia, classdaban,
+    loca_l, browser_path, prename, amongname, classsanpham, classthongtin, classten, classdanhgiadaban, datasqe_danhgia,
+    classdaban, tmdt, sear_ch, sear__ch,
 )
 
 
@@ -53,6 +57,48 @@ def html2bs4(product: bool = False):
         yield htMl
 
 
+def elem2bs4(contents, dataitemid):
+    htMl = BeautifulSoup(contents, 'html.parser')
+    thongtin_ = htMl.find('div', {"class": "RfADt"})
+    giaban_ = htMl.find('div', {"class": "aBrP0"})
+    soluongdaban_ = htMl.find('div', {"class": "_6uN7R"})
+    danhsachhinhanh_ = htMl.find('div', {"class": "picture-wrapper"})
+
+    thongtin = thongtin_.find('a')
+    try:
+        tencuasanpham = thongtin.get('title')
+        assert tencuasanpham == thongtin.text
+    except:
+        tencuasanpham: str = thongtin.text
+    duongdancuasanpham = thongtin.get('href')
+
+    giaban = giaban_.find_all('span')
+    if not len(giaban) == 1:
+        if debug: print(tencuasanpham, "-", duongdancuasanpham, "chứa thông tin khác bên cạnh giá bán")
+    else:
+        giaban = giaban[0].text
+
+    soluongdaban = soluongdaban_.find('span', {"class": "_1cEkb"})
+    if soluongdaban is None:
+        if debug: print(tencuasanpham, "-", duongdancuasanpham, "không tìm thấy số lượng đã bán")
+    else:
+        soluongdaban = soluongdaban.text
+
+    danhsachhinhanh = danhsachhinhanh_.find('img')
+    if danhsachhinhanh is None:
+        if debug: print(tencuasanpham, "-", duongdancuasanpham, "không tìm thấy hình ảnh")
+    else:
+        danhsachhinhanh: list = [danhsachhinhanh.get('src'), ]
+
+    jso[tencuasanpham] = {
+        'link': duongdancuasanpham,
+        'id': dataitemid,
+        'số lượng đã bán': soluongdaban,
+        'giá bán': giaban,
+        'hình ảnh': danhsachhinhanh,
+    }
+
+
 def gethtmlslist_byjson(jso: dict or None = None, i=0):
     if jso is None:
         jso: dict = readfile(
@@ -68,19 +114,49 @@ def gethtmlslist_byjson(jso: dict or None = None, i=0):
             if i < 7:
                 continue
         jsodict: dict = jso[sanpham]
-        brow__ser(url=jsodict['link'])
-        time.sleep(15)
+        url = jsodict['link']
+        if tmdt == 'la':
+            assert driver is not None
+            driver.get(url=url)  # TODO
+            sanpham_s: list = findelem(driver, xpath=classsanpham, scroll=True, getall=True)
+        elif tmdt == 'sh':
+            brow__ser(url=url)
+            time.sleep(15)
 
 
 def gethtmlslist_bycategories():
     # https://shopee.vn/Đồ-Chơi-cat.11036932
+    # https://www.lazada.vn/tag/do-choi-tre-em/?page=0
     sotrang: int = 9 if allproduct else 2
     for danhmuc in danhmuc_s:
         url_: str = ad + danhmuc
         for trang in range(sotrang):
             url: str = url_ + page + str(trang) if trang > 0 else url_
-            brow__ser(url=url)
-            time.sleep(15)
+            if tmdt == 'la':
+                assert driver is not None
+                driver.get(url)
+                sanpham_s: list = findelem(driver, xpath=classsanpham, scroll=True, getall=True)
+                for sanpham in sanpham_s:
+                    dataitemid = get_in4from_elem(
+                            elem=sanpham,
+                            fie='data-item-id',
+                        )
+                    contents = get_in4from_elem(
+                        elem=sanpham,
+                    )
+                    if contents is None:
+                        contents = get_in4from_elem(
+                            elem=sanpham,
+                            fie='innerhtml',
+                        )
+                    elem2bs4(contents, dataitemid)
+            elif tmdt == 'sh':
+                brow__ser(url=url)
+                for _ in range(5):
+                    pyautogui.scroll(-1500)  # Scroll down 100 pixels
+                    time.sleep(3)
+    if tmdt == 'la':
+        readfile(file=looplv1, mod="w", cont=jso, jso=True)
 
 
 def gethtmlslist_bysearch(keyword: str = "%C4%91%E1%BB%93%20ch%C6%A1i"):
@@ -90,7 +166,9 @@ def gethtmlslist_bysearch(keyword: str = "%C4%91%E1%BB%93%20ch%C6%A1i"):
     for trang in range(9):
         url: str = url_ + sear_ch + str(trang)
         brow__ser(url=url)
-        time.sleep(15)
+        for _ in range(5):
+            pyautogui.scroll(-100)  # Scroll down 100 pixels
+            time.sleep(3)
 
 
 def product_in_detail():
@@ -118,7 +196,6 @@ def product_in_detail():
 
 
 def crawlfromhtml():
-    jso: dict = dict()
     for htMl in html2bs4():
         sanpham_s = htMl.find_all('li', {"class": lambda x: x and classsanpham in x})
         for sanpham in sanpham_s:
@@ -159,21 +236,33 @@ def crawlfromhtml():
     readfile(file=looplv1, mod="w", cont=jso, jso=True)
 
 
-def findelem(driver, xpath, scroll: bool = True):
+def findelem(driver, xpath, scroll: bool = False, getall: bool = False):
     element = []
     lan = 0
-    # if scroll:
-    #     # https://stackoverflow.com/questions/20986631/how-can-i-scroll-a-web-page-using-selenium-webdriver-in-python
-    #     driver.execute_script("window.scrollTo(0, 30)")
-    #     # html = driver.find_element(By.TAG_NAME, 'html')
-    #     # html.send_keys(Keys.END)
+    if scroll:
+        # https://stackoverflow.com/questions/20986631/how-can-i-scroll-a-web-page-using-selenium-webdriver-in-python
+        # driver.execute_script("window.scrollTo(0, 30)")
+        # html = driver.find_element(By.TAG_NAME, 'html')
+        # html.send_keys(Keys.END)
+        for _ in range(5):
+            driver.execute_script("window.scrollTo(0, window.scrollY + 1500)")
+            time.sleep(3)
     while len(element) == 0:
         element = driver.find_elements(By.XPATH, xpath)
         lan += 1
         if lan > 3:
             raise NoSuchElementException
         time.sleep(1)
-    return element[0]
+    if not getall: return element[0]
+    return element
+
+
+def get_in4from_elem(
+        elem,
+        fie: str = 'outerHTML',
+        # fie: str = 'innerhtml'
+):
+    return elem.get_attribute(fie)
 
 
 def clickkk(driver, xpath):
@@ -221,40 +310,44 @@ def chrooome(PROXY: str or None = None, incog: bool = False):
     from webdriver_manager.chrome import ChromeDriverManager
     from fake_useragent import UserAgent
 
-#     options = webdriver.ChromeOptions()
-#     if PROXY is not None:
-#         # https://stackoverflow.com/questions/11450158/how-do-i-set-proxy-for-chrome-in-python-webdriver
-#         options.add_argument('--proxy-server=%s' % PROXY)
-# ##    options.add_experimental_option('excludeSwitches', ['enable-logging'])
-# ##    options.add_argument("--start-maximized")
-#
-#     ua = UserAgent()
-#     user_agent = ua.random;print(user_agent)
-# ##    https://stackoverflow.com/questions/68566449/how-to-fix-this-browser-or-app-may-not-be-secure-error-when-using-selenium-java
-# ##    https://stackoverflow.com/questions/49565042/way-to-change-google-chrome-user-agent-in-selenium
-#     options.add_argument(f'--user-agent={user_agent}')
-#
-# ##    options.add_argument("--window-size=1000,1080")
-# ##    options.add_argument("--window-position=1000,0")
-#     options.add_argument("--disable-notifications")
-#     options.add_argument("--disable-infobars")
-#     # options.add_argument('--headless')
-# ##    disable the banner "Chrome is being controlled by automated test software"
-#     options.add_argument("--disable-extensions")
-#     options.add_argument("--disable-popup-blocking")
-#     if incog:
-#         options.add_argument("--incognito")
+    options = webdriver.ChromeOptions()
+    if PROXY is not None:
+        # https://stackoverflow.com/questions/11450158/how-do-i-set-proxy-for-chrome-in-python-webdriver
+        options.add_argument('--proxy-server=%s' % PROXY)
+##    options.add_experimental_option('excludeSwitches', ['enable-logging'])
+##    options.add_argument("--start-maximized")
+
+    ua = UserAgent()
+    user_agent = ua.random;print(user_agent)
+##    https://stackoverflow.com/questions/68566449/how-to-fix-this-browser-or-app-may-not-be-secure-error-when-using-selenium-java
+##    https://stackoverflow.com/questions/49565042/way-to-change-google-chrome-user-agent-in-selenium
+    options.add_argument(f'--user-agent={user_agent}')
+
+##    options.add_argument("--window-size=1000,1080")
+##    options.add_argument("--window-position=1000,0")
+    options.add_argument("--disable-notifications")
+    options.add_argument("--disable-infobars")
+    # options.add_argument('--headless')
+##    disable the banner "Chrome is being controlled by automated test software"
+    options.add_argument("--disable-extensions")
+    options.add_argument("--disable-popup-blocking")
+    # Pass the argument 1 to allow and 2 to block
+    options.add_experimental_option("prefs", {
+        "profile.default_content_setting_values.notifications": 2
+        })
+    if incog:
+        options.add_argument("--incognito")
     return webdriver.Chrome(
 ##        ChromeDriverManager(version='114.0.5735.16').install(),
         service=ChromeService(ChromeDriverManager().install()),
 ##        chrome_options=options,
-        # options=options,
+        options=options,
         )
 
 
 def brow__ser(
     url="https://shopee.vn/search?facet=11036946&keyword=do%20choi&noCorrection=true&page=0",
-    browser_path=r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+    browser_path=browser_path,
 ):
     import webbrowser
     webbrowser.register('custom_browser', None, webbrowser.BackgroundBrowser(browser_path))
@@ -272,8 +365,8 @@ def phant():
 
 def firefox(incog: bool = False):
 ##    https://stackoverflow.com/questions/66209119/automation-google-login-with-python-and-selenium-shows-this-browser-or-app-may
-    # import geckodriver_autoinstaller
-    # geckodriver_autoinstaller.install()
+    import geckodriver_autoinstaller
+    geckodriver_autoinstaller.install()
     from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
     from selenium.webdriver.firefox.options import Options
     from selenium.webdriver.firefox.service import Service
@@ -286,21 +379,21 @@ def firefox(incog: bool = False):
     options = Options()
     if incog:
         options.set_preference("browser.privatebrowsing.autostart", True)
-    # options.add_argument("--headless")
-    # options.binary_location = '/usr/bin/firefox'
-    # options.add_argument("download.default_directory=C:\\Music")
-    # profile = webdriver.FirefoxProfile(
-    #     '/home/nguyenlamvu/snap/firefox/common/.mozilla/firefox/f1yu319w.default-release'
-    #     )
-    # # profile.set_preference("dom.webdriver.enabled", False)
-    # # profile.set_preference('useAutomationExtension', False)
+    options.add_argument("--headless")
+    options.binary_location = '/usr/bin/firefox'
+    options.add_argument("download.default_directory=C:\\Music")
+    profile = webdriver.FirefoxProfile(
+        '/home/nguyenlamvu/snap/firefox/common/.mozilla/firefox/f1yu319w.default-release'
+        )
+    profile.set_preference("dom.webdriver.enabled", False)
+    profile.set_preference('useAutomationExtension', False)
     # profile.set_preference('browser.download.folderList', 2)
     # profile.set_preference('browser.download.manager.showWhenStarting', False)
     # profile.set_preference('browser.download.dir', os.getcwd())
     # profile.set_preference('browser.helperApps.neverAsk.saveToDisk', ('application/vnd.ms-excel'))
     # profile.set_preference('general.warnOnAboutConfig', False)
-    # profile.update_preferences()
-    # desired = DesiredCapabilities.FIREFOX
+    profile.update_preferences()
+    desired = DesiredCapabilities.FIREFOX
 ##    https://stackoverflow.com/questions/76802588/python-selenium-unexpected-keyword-argument-executable-path
     return webdriver.Firefox(
         service=service,
@@ -464,6 +557,8 @@ def helloCallBack():  # mở cửa sổ popup
     print_on_gui("Hello", "world!", text_widget=text_widget)
 
 
+driver = chrooome() if tmdt in ('la', ) else None
+jso: dict = dict()
 ### Create a new tkinter window
 ##root = tk.Tk()
 ### Create a new `Text` widget
