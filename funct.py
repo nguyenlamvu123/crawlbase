@@ -12,9 +12,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
 from addr import (
-    ad, danhmuc_s, page, looplv1, looplv2, debug, allproduct, classinprod_ten, classinprod_danhgia, classinprod_motadai,
-    loca_l, browser_path, prename, amongname, classsanpham, classthongtin, classten, classdanhgiadaban, datasqe_danhgia,
-    classdaban, tmdt, sear_ch, sear__ch,
+    page, debug, allproduct, classinprod_ten, classinprod_danhgia, classinprod_motadai, scro,
+    loca_l, prename, amongname, classthongtin, classten, classdanhgiadaban, datasqe_danhgia,
+    browser_path, classdaban, sear_ch, sear__ch,
 )
 
 
@@ -90,7 +90,7 @@ def elem2bs4(contents, dataitemid):
     else:
         danhsachhinhanh: list = [danhsachhinhanh.get('src'), ]
 
-    jso[tencuasanpham] = {
+    jso_laz[tencuasanpham] = {
         'link': duongdancuasanpham,
         'id': dataitemid,
         'số lượng đã bán': soluongdaban,
@@ -99,7 +99,7 @@ def elem2bs4(contents, dataitemid):
     }
 
 
-def gethtmlslist_byjson(jso: dict or None = None, i=0):
+def gethtmlslist_byjson(looplv1, tmdt, classsanpham, driver, jso: dict or None = None, i=0):
     if jso is None:
         jso: dict = readfile(
             file=looplv1,
@@ -117,16 +117,24 @@ def gethtmlslist_byjson(jso: dict or None = None, i=0):
         url = jsodict['link']
         if tmdt == 'la':
             assert driver is not None
-            driver.get(url=url)  # TODO
-            sanpham_s: list = findelem(driver, xpath=classsanpham, scroll=True, getall=True)
+            # if url.startswith('//'):
+            #     url = url[2:]
+            # driver.get(url=url)  # TODO
+            # sanpham_s: list = findelem(driver, xpath=classsanpham, scroll=True, getall=True)
         elif tmdt == 'sh':
             brow__ser(url=url)
             time.sleep(15)
 
 
-def gethtmlslist_bycategories():
+def gethtmlslist_bycategories(driver, fol, danhmuc_s, ad, tmdt, classsanpham):
     # https://shopee.vn/Đồ-Chơi-cat.11036932
     # https://www.lazada.vn/tag/do-choi-tre-em/?page=0
+    if fol is not None:
+        if not os.path.isdir(fol):
+            os.mkdir(fol)
+    looplv1: str = os.path.join(fol, "looplv1.json") if fol is not None else "looplv1.json"
+    looplv2: str = os.path.join(fol, "looplv2.json") if fol is not None else "looplv2.json"
+
     sotrang: int = 9 if allproduct else 2
     for danhmuc in danhmuc_s:
         url_: str = ad + danhmuc
@@ -153,13 +161,14 @@ def gethtmlslist_bycategories():
             elif tmdt == 'sh':
                 brow__ser(url=url)
                 for _ in range(5):
-                    pyautogui.scroll(-1500)  # Scroll down 100 pixels
                     time.sleep(3)
+                    pyautogui.scroll(scro)  # Scroll down 10 pixels
     if tmdt == 'la':
-        readfile(file=looplv1, mod="w", cont=jso, jso=True)
+        readfile(file=looplv1, mod="w", cont=jso_laz, jso=True)
+    return looplv2, looplv1
 
 
-def gethtmlslist_bysearch(keyword: str = "%C4%91%E1%BB%93%20ch%C6%A1i"):
+def gethtmlslist_bysearch(ad, keyword: str = "%C4%91%E1%BB%93%20ch%C6%A1i"):
     # https://shopee.vn/search?keyword=%C4%91%E1%BB%93%20ch%C6%A1i&page=2
     # https://shopee.vn/search?facet=11036954&keyword=%C4%91%E1%BB%93%20ch%C6%A1i&noCorrection=true&page=0
     url_: str = ad + sear__ch + keyword
@@ -171,8 +180,8 @@ def gethtmlslist_bysearch(keyword: str = "%C4%91%E1%BB%93%20ch%C6%A1i"):
             time.sleep(3)
 
 
-def product_in_detail():
-    gethtmlslist_byjson()
+def product_in_detail(looplv2, looplv1, tmdt, classsanpham, driver):
+    gethtmlslist_byjson(looplv1, tmdt, classsanpham, driver)
     jso: dict = dict()
     for htMl in html2bs4(product=True):
         ten_ = htMl.find('div', {"class": classinprod_ten})
@@ -195,7 +204,7 @@ def product_in_detail():
     readfile(file=looplv2, mod="w", cont=jso, jso=True)
 
 
-def crawlfromhtml():
+def crawlfromhtml(looplv1, classsanpham):
     for htMl in html2bs4():
         sanpham_s = htMl.find_all('li', {"class": lambda x: x and classsanpham in x})
         for sanpham in sanpham_s:
@@ -315,7 +324,7 @@ def chrooome(PROXY: str or None = None, incog: bool = False):
         # https://stackoverflow.com/questions/11450158/how-do-i-set-proxy-for-chrome-in-python-webdriver
         options.add_argument('--proxy-server=%s' % PROXY)
 ##    options.add_experimental_option('excludeSwitches', ['enable-logging'])
-##    options.add_argument("--start-maximized")
+    options.add_argument("--start-maximized")
 
     ua = UserAgent()
     user_agent = ua.random;print(user_agent)
@@ -557,8 +566,8 @@ def helloCallBack():  # mở cửa sổ popup
     print_on_gui("Hello", "world!", text_widget=text_widget)
 
 
-driver = chrooome() if tmdt in ('la', ) else None
 jso: dict = dict()
+jso_laz: dict = dict()
 ### Create a new tkinter window
 ##root = tk.Tk()
 ### Create a new `Text` widget

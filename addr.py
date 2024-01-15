@@ -1,45 +1,12 @@
-tmdt: str = 'la'  # 'sh'
+from sys import platform
 
-if tmdt == 'la':
-    ad: str = "https://www.lazada.vn"
-    danhmuc_s: list = [
-        '/tag/do-choi-tre-em/',
-    ]
 
-    classsanpham: str = '//div[@class="Bm3ON"]'
-elif tmdt == 'sh':
-    ad: str = "https://shopee.vn"
-    danhmuc_s: list = [
-        # "/Thời-Trang-Nam-cat.11035567",
-        # "/Thời-Trang-Nữ-cat.11035639",
-        # "/Điện-Thoại-Phụ-Kiện-cat.11036030",
-        # "/Mẹ-Bé-cat.11036194",
-        # "/Thiết-Bị-Điện-Tử-cat.11036132",
-        # "/Nhà-Cửa-Đời-Sống-cat.11036670",
-        # "/Máy-Tính-Laptop-cat.11035954",
-        # "/Sắc-Đẹp-cat.11036279",
-        # "/Máy-Ảnh-Máy-Quay-Phim-cat.11036101",
-        # "/Sức-Khỏe-cat.11036345",
-        # "/Đồng-Hồ-cat.11035788",
-        # "/Giày-Dép-Nữ-cat.11035825",
-        # "/Giày-Dép-Nam-cat.11035801",
-        # "/Túi-Ví-Nữ-cat.11035761",
-        # "/Thiết-Bị-Điện-Gia-Dụng-cat.11036971",
-        # "/Phụ-Kiện-Trang-Sức-Nữ-cat.11035853",
-        # "/Thể-Thao-Du-Lịch-cat.11035478",
-        # "/Bách-Hóa-Online-cat.11036525",
-        # "/Ô-Tô-Xe-Máy-Xe-Đạp-cat.11036793",
-        # "/Nhà-Sách-Online-cat.11036863",
-        # "/Balo-Túi-Ví-Nam-cat.11035741",
-        # "/Thời-Trang-Trẻ-Em-cat.11036382",
-        "/Đồ-Chơi-cat.11036932",
-        # "/Giặt-Giũ-Chăm-Sóc-Nhà-Cửa-cat.11036624",
-        # "/Chăm-Sóc-Thú-Cưng-cat.11036478",
-        # "/Voucher-Dịch-Vụ-cat.11035898",
-        # "/Dụng-cụ-và-thiết-bị-tiện-ích-cat.11116484",
-    ]
+tmdt_s: list = [
+    'sh',
+    'la',
+]
 
-    classsanpham: str = "shopee-search"
+
 debug: bool = False  # active or inactive print()
 allproduct: bool = False  # crawl all product or just illustrate
 page: str = '?page='
@@ -58,8 +25,12 @@ classinprod_ten: str = "_44qnta"
 classinprod_danhgia: str = "_1k47d8 _046PXf"
 classinprod_motadai: str = "MCCLkq"
 
-loca_l: str = r'C:\Users\HLC\Downloads'
-browser_path: str = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+scro: int = -10
 
-looplv1: str = "looplv1.json"
-looplv2: str = "looplv2.json"
+if platform == "win32":
+    loca_l: str = r'C:\Users\HLC\Downloads'
+    browser_path: str = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+else:
+    assert platform == "linux" or platform == "linux2"
+    loca_l: str = '/home/zaibachkhoa/Downloads/'
+    browser_path: str = "/usr/bin/google-chrome"

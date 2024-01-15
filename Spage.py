@@ -6,9 +6,9 @@ from funct import (
     print_on_gui, delete_cache, getin4, stopandkillthread, brow__ser, gethtmlslist_bycategories, crawlfromhtml,
     gethtmlslist_bysearch, product_in_detail, chrooome,
 )
-from addr import tmdt
+from addr import tmdt_s
 
-# Hàm thực thi cho mỗi luồng
+# # Hàm thực thi cho mỗi luồng
 # def work(email, passw, falivetok, fanpage):
 #     sema.acquire()
 #     driver = dangnhap(text_widget, email, passw, falivetok)
@@ -19,43 +19,93 @@ from addr import tmdt
 #     driver = thich(driver=driver, fanpage=fanpage, li=switchpage)
 #     spam(driver)
 #     sema.release()
-
-
-def worker(email, passw, falivetok, fanpage, thread_id: int or None = None):
-    if thread_id is not None:
-        print(f"Luồng {thread_id} đang làm việc")
-    t1 = threading.Thread(target=work, args=(email, passw, falivetok, fanpage, ))
-    t1.start()
-
-
-def mult_thre():
-    # Tạo một danh sách các luồng
-    threads = []
-    for em_pa in getin4():
-        email_, passw_, falivetok_, fanpage_ = em_pa[0], em_pa[1], em_pa[2], em_pa[3]
-
-        thread = threading.Thread(
-            target=worker,
-            args=(email_, passw_, falivetok_, fanpage_, len(threads),)
-        )
-        thread.start()
-        threads.append(thread)
-
-    # # Đợi cho tất cả các luồng hoàn thành
-    # for thread in threads:
-    #     thread.join()
-
-    print("Tất cả các luồng đã hoàn thành công việc")
+#
+#
+# def worker(email, passw, falivetok, fanpage, thread_id: int or None = None):
+#     if thread_id is not None:
+#         print(f"Luồng {thread_id} đang làm việc")
+#     t1 = threading.Thread(target=work, args=(email, passw, falivetok, fanpage, ))
+#     t1.start()
+#
+#
+# def mult_thre():
+#     # Tạo một danh sách các luồng
+#     threads = []
+#     for em_pa in getin4():
+#         email_, passw_, falivetok_, fanpage_ = em_pa[0], em_pa[1], em_pa[2], em_pa[3]
+#
+#         thread = threading.Thread(
+#             target=worker,
+#             args=(email_, passw_, falivetok_, fanpage_, len(threads),)
+#         )
+#         thread.start()
+#         threads.append(thread)
+#
+#     # # Đợi cho tất cả các luồng hoàn thành
+#     # for thread in threads:
+#     #     thread.join()
+#
+#     print("Tất cả các luồng đã hoàn thành công việc")
 
 
 if __name__ == '__main__':
-    if tmdt == 'la':
-        gethtmlslist_bycategories()  # -> looplv1.json                             # crawl_Lazada
-    elif tmdt == 'sh':
-        gethtmlslist_bycategories()  # -> html files                               # crawl_shopee_by_html
-        # gethtmlslist_bysearch(keyword="%C4%91%E1%BB%93%20ch%C6%A1i")             # crawl_shopee_by_html
-        crawlfromhtml()  # -> looplv1.json                                         # crawl_shopee_by_html
-    product_in_detail()  # -> looplv2.json                                     # crawl_shopee_by_html
+    looplv2, looplv1, classsanpham, driver = None, None, None, None
+
+
+    for tmdt in tmdt_s:
+        if tmdt == 'la':
+            if driver is None:
+                driver = chrooome()
+            fol: str = 'laz'
+            ad: str = "https://www.lazada.vn"
+            danhmuc_s: list = [
+                '/tag/do-choi-tre-em/',
+            ]
+
+            classsanpham: str = '//div[@class="Bm3ON"]'
+            looplv2, looplv1 = gethtmlslist_bycategories(driver, fol, danhmuc_s, ad, tmdt, classsanpham)  # -> looplv1.json
+            product_in_detail(looplv2, looplv1, tmdt, classsanpham, driver)  # -> looplv2.json
+            driver.quit()
+        elif tmdt == 'sh':
+            if driver is not None:
+                driver = None
+            fol: str = 'sho'
+            ad: str = "https://shopee.vn"
+            danhmuc_s: list = [
+                # "/Thời-Trang-Nam-cat.11035567",
+                # "/Thời-Trang-Nữ-cat.11035639",
+                # "/Điện-Thoại-Phụ-Kiện-cat.11036030",
+                # "/Mẹ-Bé-cat.11036194",
+                # "/Thiết-Bị-Điện-Tử-cat.11036132",
+                # "/Nhà-Cửa-Đời-Sống-cat.11036670",
+                # "/Máy-Tính-Laptop-cat.11035954",
+                # "/Sắc-Đẹp-cat.11036279",
+                # "/Máy-Ảnh-Máy-Quay-Phim-cat.11036101",
+                # "/Sức-Khỏe-cat.11036345",
+                # "/Đồng-Hồ-cat.11035788",
+                # "/Giày-Dép-Nữ-cat.11035825",
+                # "/Giày-Dép-Nam-cat.11035801",
+                # "/Túi-Ví-Nữ-cat.11035761",
+                # "/Thiết-Bị-Điện-Gia-Dụng-cat.11036971",
+                # "/Phụ-Kiện-Trang-Sức-Nữ-cat.11035853",
+                # "/Thể-Thao-Du-Lịch-cat.11035478",
+                # "/Bách-Hóa-Online-cat.11036525",
+                # "/Ô-Tô-Xe-Máy-Xe-Đạp-cat.11036793",
+                # "/Nhà-Sách-Online-cat.11036863",
+                # "/Balo-Túi-Ví-Nam-cat.11035741",
+                # "/Thời-Trang-Trẻ-Em-cat.11036382",
+                "/Đồ-Chơi-cat.11036932",
+                # "/Giặt-Giũ-Chăm-Sóc-Nhà-Cửa-cat.11036624",
+                # "/Chăm-Sóc-Thú-Cưng-cat.11036478",
+                # "/Voucher-Dịch-Vụ-cat.11035898",
+                # "/Dụng-cụ-và-thiết-bị-tiện-ích-cat.11116484",
+            ]
+
+            classsanpham: str = "shopee-search"
+            looplv2, looplv1 = gethtmlslist_bycategories(driver, fol, danhmuc_s, ad, tmdt, classsanpham)  # -> html files
+            # gethtmlslist_bysearch(keyword="%C4%91%E1%BB%93%20ch%C6%A1i")
+            crawlfromhtml(looplv1, classsanpham)  # -> looplv1.json
+            product_in_detail(looplv2, looplv1, tmdt, classsanpham, driver)  # -> looplv2.json
     # # num_threads: int = 4
     # # sema = threading.Semaphore(value=num_threads)
     # # Bsthread = tk.Button(
