@@ -3,10 +3,10 @@ import tkinter as tk
 
 from funct import (
     # readfile, findelem, clickkk, dangnhap, thich, spam, root, text_widget,
-    print_on_gui, delete_cache, getin4, stopandkillthread, brow__ser, gethtmlslist_bycategories, crawlfromhtml,
+    print_on_gui, delete_cache, stopandkillthread, brow__ser, gethtmlslist_bycategories, crawlfromhtml,
     gethtmlslist_bysearch, product_in_detail, chrooome,
 )
-from addr import tmdt_s
+from addr import tmdt_s, add_r
 
 # # Hàm thực thi cho mỗi luồng
 # def work(email, passw, falivetok, fanpage):
@@ -53,59 +53,34 @@ if __name__ == '__main__':
 
 
     for tmdt in tmdt_s:
+        (
+            fol, ad, danhmuc_s, classsanpham, classthongtin, classten, classdanhgiadaban, datasqe_danhgia,
+            classdaban, classnoiban, classgiaban, classinprod_ten, classinprod_danhgia, classinprod_motadai
+        ) = add_r(tmdt)
+        assert fol is not None
         if tmdt == 'la':
             if driver is None:
                 driver = chrooome()
-            fol: str = 'laz'
-            ad: str = "https://www.lazada.vn"
-            danhmuc_s: list = [
-                '/tag/do-choi-tre-em/',
-            ]
-
-            classsanpham: str = '//div[@class="Bm3ON"]'
-            looplv2, looplv1 = gethtmlslist_bycategories(driver, fol, danhmuc_s, ad, tmdt, classsanpham)  # -> looplv1.json
-            product_in_detail(looplv2, looplv1, tmdt, classsanpham, driver)  # -> looplv2.json
+            looplv2, looplv1 = gethtmlslist_bycategories(
+                driver, fol, danhmuc_s, ad, tmdt, classsanpham,
+                classthongtin, classdanhgiadaban, classdaban, datasqe_danhgia, classten
+            )  # -> looplv1.json
+            product_in_detail(
+                looplv2, looplv1, tmdt, classinprod_ten, classinprod_danhgia, classinprod_motadai, driver
+            )  # -> looplv2.json
             driver.quit()
         elif tmdt == 'sh':
             if driver is not None:
                 driver = None
-            fol: str = 'sho'
-            ad: str = "https://shopee.vn"
-            danhmuc_s: list = [
-                # "/Thời-Trang-Nam-cat.11035567",
-                # "/Thời-Trang-Nữ-cat.11035639",
-                # "/Điện-Thoại-Phụ-Kiện-cat.11036030",
-                # "/Mẹ-Bé-cat.11036194",
-                # "/Thiết-Bị-Điện-Tử-cat.11036132",
-                # "/Nhà-Cửa-Đời-Sống-cat.11036670",
-                # "/Máy-Tính-Laptop-cat.11035954",
-                # "/Sắc-Đẹp-cat.11036279",
-                # "/Máy-Ảnh-Máy-Quay-Phim-cat.11036101",
-                # "/Sức-Khỏe-cat.11036345",
-                # "/Đồng-Hồ-cat.11035788",
-                # "/Giày-Dép-Nữ-cat.11035825",
-                # "/Giày-Dép-Nam-cat.11035801",
-                # "/Túi-Ví-Nữ-cat.11035761",
-                # "/Thiết-Bị-Điện-Gia-Dụng-cat.11036971",
-                # "/Phụ-Kiện-Trang-Sức-Nữ-cat.11035853",
-                # "/Thể-Thao-Du-Lịch-cat.11035478",
-                # "/Bách-Hóa-Online-cat.11036525",
-                # "/Ô-Tô-Xe-Máy-Xe-Đạp-cat.11036793",
-                # "/Nhà-Sách-Online-cat.11036863",
-                # "/Balo-Túi-Ví-Nam-cat.11035741",
-                # "/Thời-Trang-Trẻ-Em-cat.11036382",
-                "/Đồ-Chơi-cat.11036932",
-                # "/Giặt-Giũ-Chăm-Sóc-Nhà-Cửa-cat.11036624",
-                # "/Chăm-Sóc-Thú-Cưng-cat.11036478",
-                # "/Voucher-Dịch-Vụ-cat.11035898",
-                # "/Dụng-cụ-và-thiết-bị-tiện-ích-cat.11116484",
-            ]
-
-            classsanpham: str = "shopee-search"
             looplv2, looplv1 = gethtmlslist_bycategories(driver, fol, danhmuc_s, ad, tmdt, classsanpham)  # -> html files
             # gethtmlslist_bysearch(keyword="%C4%91%E1%BB%93%20ch%C6%A1i")
-            crawlfromhtml(looplv1, classsanpham)  # -> looplv1.json
-            product_in_detail(looplv2, looplv1, tmdt, classsanpham, driver)  # -> looplv2.json
+            crawlfromhtml(
+                looplv1, classsanpham, classthongtin, classten, classdanhgiadaban, datasqe_danhgia, classdaban,
+                classnoiban, classgiaban
+            )  # -> looplv1.json
+            product_in_detail(
+                looplv2, looplv1, tmdt, classinprod_ten, classinprod_danhgia, classinprod_motadai, driver
+            )  # -> looplv2.json
     # # num_threads: int = 4
     # # sema = threading.Semaphore(value=num_threads)
     # # Bsthread = tk.Button(
