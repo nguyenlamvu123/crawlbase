@@ -53,20 +53,28 @@ if __name__ == '__main__':
     for tmdt in tmdt_s:
         (
             fol, ad, danhmuc_s, classsanpham, classthongtin, classten, classdanhgiadaban, datasqe_danhgia,
-            classdaban, classnoiban, classgiaban, classinprod_ten, classinprod_danhgia, classinprod_motadai
+            classdaban_, classdaban, classnoiban, classgiaban, classinprod_ten, classinprod_danhgia, classinprod_motadai
         ) = add_r(tmdt)
         assert fol is not None
-        if tmdt == 'la':
+        if tmdt == 'ta':
             if driver is None:
                 driver = chrooome()
             looplv2, looplv1 = gethtmlslist_bycategories(
                 driver, fol, danhmuc_s, ad, tmdt, classsanpham,
-                classthongtin, classdanhgiadaban, classdaban, datasqe_danhgia, classten, classnoiban
+                classthongtin, classdanhgiadaban, classdaban_, classdaban, datasqe_danhgia, classten, classnoiban
+            )  # -> looplv1.json
+        elif tmdt in ('la', '1688', ):
+            if driver is None:
+                driver = chrooome()
+            looplv2, looplv1 = gethtmlslist_bycategories(
+                driver, fol, danhmuc_s, ad, tmdt, classsanpham,
+                classthongtin, classdanhgiadaban, classdaban_, classdaban, datasqe_danhgia, classten, classnoiban, classgiaban
             )  # -> looplv1.json
             product_in_detail_(
                 looplv2, looplv1, tmdt, classinprod_ten, classinprod_danhgia, classinprod_motadai, driver
             )  # -> looplv2.json
             driver.quit()
+            driver = None
         elif tmdt == 'sh':
             if driver is not None:
                 driver = None

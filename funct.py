@@ -9,8 +9,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
 from addr import (
-    loca_l, html_local, prename, amongname, sear__ch, masanphamshopee, page, debug, allproduct, cra_html, db,
-    browser_path, danhmucnhom, danhmucloai, scro, motsolanmomoi, sear_ch, headers, postapi,
+    loca_l, html_local, prename, amongname, sear__ch, masanphamshopee, page,
+    soluongdaban_1688, motvan_1688, mot_1688, findid_class, noiban_class, xpathsanpham_1688,
+    debug, allproduct, allproduct_, cra_html, db,
+    browser_path, danhmucnhom, danhmucloai, scro, motsolanmomoi, sear_ch, headers, postapi, form_json,
 )
 
 
@@ -63,6 +65,24 @@ def oversimplify_string(s: str) -> str:
         .replace(' ', '')
 
 
+def parsesoluongdaban(soluongdaban) -> int:
+    """
+    万件 = x10.000
+    件: x1
+    """
+    assert soluongdaban_1688 in soluongdaban
+    soluong: str = soluongdaban[
+                   soluongdaban.find(soluongdaban_1688) + len(soluongdaban_1688):
+                   ]
+    if motvan_1688 in soluong:
+        return parse_giaban(soluong) * 10000
+    elif mot_1688 in soluong:
+        return parse_giaban(soluong) * 1
+    else:
+        print()
+
+
+
 def parse_soluong(soluongdaban: str) -> int:  # just only shopee
     """
     'Đã bán 789'
@@ -85,10 +105,18 @@ def parse_soluong(soluongdaban: str) -> int:  # just only shopee
     return ret
 
 
-def parse_giaban(giaban: str) -> int:  # just only lazada
+def parse_giaban(giaban: str) -> float:
     # '310.000 ₫'
     # '911 Đã bán'
-    return int(''.join([s for s in giaban if s.isdigit()]))
+    # ¥0.58
+    return float(''.join([s for s in giaban if s.isdigit() or s in ('.', )]))
+
+
+def parse_mahang(mahang: str) -> str:
+    # 'https://rights.1688.com/trade/workReport.htm?itemId=678314123816'
+    iI: str = 'itemId='
+    assert iI in mahang
+    return mahang.split(iI)[-1]
 
 
 def post2api(jso):
@@ -104,16 +132,19 @@ def post2api(jso):
 
 
 
-def html2bs4(product: bool = False):
-    html_s = [s for s in os.listdir(loca_l) if all([  # danh sách html các trang chi tiết sản phẩm
-        s.endswith('.html'),
-        amongname in s,  # tên file chứa chuỗi 'Shopee Việt Nam'
-        not s.startswith(prename),  # tên file không bắt đầu bằng chuỗi 'Mua sắm online sản phẩm'
-    ])] if product else [s for s in os.listdir(loca_l) if all([  # danh sách html các trang tổng
-        s.endswith('.html'),
-        amongname in s,  # tên file chứa chuỗi 'Shopee Việt Nam'
-        s.startswith(prename),  # tên file bắt đầu bằng chuỗi 'Mua sắm online sản phẩm'
-    ])]
+def html2bs4(product: bool = False, tmdt: str = '1688'):
+    if tmdt == '1688':
+        html_s = [s for s in os.listdir(loca_l) if s.endswith('.html')]
+    else:
+        html_s = [s for s in os.listdir(loca_l) if all([  # danh sách html các trang chi tiết sản phẩm
+            s.endswith('.html'),
+            amongname in s,  # tên file chứa chuỗi 'Shopee Việt Nam'
+            not s.startswith(prename),  # tên file không bắt đầu bằng chuỗi 'Mua sắm online sản phẩm'
+        ])] if product else [s for s in os.listdir(loca_l) if all([  # danh sách html các trang tổng
+            s.endswith('.html'),
+            amongname in s,  # tên file chứa chuỗi 'Shopee Việt Nam'
+            s.startswith(prename),  # tên file bắt đầu bằng chuỗi 'Mua sắm online sản phẩm'
+        ])]
     for html in html_s:
         if debug:
             print(html)
@@ -123,18 +154,87 @@ def html2bs4(product: bool = False):
             mod="_r"
         )
         htMl = BeautifulSoup(contents, 'html.parser')
-        os.rename(
-            filename,
-            os.path.join(html_local, html),
-        )
+        if cra_html:
+            os.rename(
+                filename,
+                os.path.join(html_local, html),
+            )
         yield htMl
 
 
-def elem2bs4(contents, dataitemid, classthongtin, classdanhgiadaban, classdaban, datasqe_danhgia, classten, classnoiban):
+def elem2bs4_(contents, dataitemid, classthongtin, classdanhgiadaban, classdaban_, classdaban, datasqe_danhgia, classten, classnoiban, classgiaban):  # 1688
+    """
+    <a class=classdanhgiadaban>                                            duongdan
+        <div class="is-video-container"></div>
+        <div class=datasqe_danhgia><img></img></div>                       danhsachhinhanh_
+        <div class=classthongtin>                                          thongtin_
+            <div class="title-container"></div>
+                <div class="icons"></div>
+                <div class=classten></div>                                 tencuasanpham
+            <div class="offer-properties"></div>
+            <div class="offer-labels"></div>
+            <div class=classdaban_>                                        soluongdaban_
+                <p class=classgiaban></p>                                  giaban
+                <p class="offer-attr"></p>
+            </div>
+        </div>
+        <div class=classdaban_>                                            soluongdaban_
+            <div class="...classdaban..."></div>                           soluongdaban
+            <div class="...classnoiban..."></div>                          noiban
+        </div>
+    </a>
+    """
+    htMl = BeautifulSoup(contents, 'html.parser')
+    duongdan = htMl.find('a', {"class": classdanhgiadaban})
+    duongdancuasanpham = duongdan.get('href')
+    thongtin_ = duongdan.find('div', {"class": classthongtin})
+    danhsachhinhanh_ = duongdan.find('div', {"class": datasqe_danhgia})
+    divclassclearfix = duongdan.find_all('div', {"class": classdaban_})
+
+    tencuasanpham = thongtin_.find('div', {'class': classten}).text
+    danhsachhinhanh = danhsachhinhanh_.find('img', {'src': True})
+
+    giaban, soluongdaban, noiban = None, None, None
+    for soluongdaban_ in divclassclearfix:
+        if giaban is None:
+            giaban = soluongdaban_.find('p', {"class": classgiaban})
+            if giaban is not None:
+                giaban = giaban.text
+        if soluongdaban is None:
+            soluongdaban = soluongdaban_.find('div', {"class": lambda x: x and classdaban in x})
+        if noiban is None:
+            noiban = soluongdaban_.find('div', {"class": lambda x: x and classnoiban in x})
+            if noiban is not None:
+                noiban = noiban.text
+
+    if danhsachhinhanh is None:
+        if debug: print(tencuasanpham, "-", duongdancuasanpham, "không tìm thấy hình ảnh")
+    else:
+        danhsachhinhanh: list = [danhsachhinhanh.get('src'), ]
+
+    scri_jso: dict = form_json(
+        Ma_Hang=dataitemid,
+        Ten_Hang=tencuasanpham,
+        Mo_Ta="<string>",
+        Sl_Ban=parsesoluongdaban(soluongdaban.text),
+        Danh_Gia=-1,
+        Gia_Bl=parse_giaban(giaban),
+        Link_Anh=danhsachhinhanh[-1],
+        Link_Sp=duongdancuasanpham,
+        Dia_Chi_Ban=noiban,
+        ID_Nhom=None,  # TODO
+        ID_Loai=None,  # TODO
+    )
+    lis_jso_1688.append(scri_jso)
+    if debug:
+        lis__jso = lis_jso_1688.copy()
+
+
+def elem2bs4(contents, dataitemid, classthongtin, classdanhgiadaban, classdaban_, classdaban, datasqe_danhgia, classten, classnoiban):  # lazada
     htMl = BeautifulSoup(contents, 'html.parser')
     thongtin_ = htMl.find('div', {"class": classthongtin})
     giaban_ = htMl.find('div', {"class": classdanhgiadaban})
-    soluongdaban_ = htMl.find('div', {"class": classdaban})
+    soluongdaban_ = htMl.find('div', {"class": classdaban_})
     danhsachhinhanh_ = htMl.find('div', {"class": datasqe_danhgia})
 
     thongtin = thongtin_.find('a')
@@ -157,32 +257,32 @@ def elem2bs4(contents, dataitemid, classthongtin, classdanhgiadaban, classdaban,
     else:
         noiban = noiban.text
 
-    soluongdaban = soluongdaban_.find('span', {"class": "_1cEkb"})
+    soluongdaban = soluongdaban_.find('span', {"class": classdaban})
     if soluongdaban is None:
         if debug: print(tencuasanpham, "-", duongdancuasanpham, "không tìm thấy số lượng đã bán")
         soluongdaban: int = 0
     else:
         soluongdaban: int = parse_giaban(soluongdaban.text)
 
-    danhsachhinhanh = danhsachhinhanh_.find('img')
+    danhsachhinhanh = danhsachhinhanh_.find('img', {'src': True})
     if danhsachhinhanh is None:
         if debug: print(tencuasanpham, "-", duongdancuasanpham, "không tìm thấy hình ảnh")
     else:
         danhsachhinhanh: list = [danhsachhinhanh.get('src'), ]
 
-    scri_jso: dict = {
-        "Ma_Hang": dataitemid,
-        "Ten_Hang": tencuasanpham,
-        "Mo_Ta": "<string>",
-        "Sl_Ban": soluongdaban,
-        "Danh_Gia": -1,
-        "Gia_Bl": parse_giaban(giaban),
-        "Link_Anh": danhsachhinhanh[-1],
-        "Link_Sp": duongdancuasanpham,
-        "Dia_Chi_Ban": noiban,
-        "ID_Nhom": None,  # TODO
-        "ID_Loai": None  # TODO
-    }
+    scri_jso: dict = form_json(
+        Ma_Hang=dataitemid,
+        Ten_Hang=tencuasanpham,
+        Mo_Ta="<string>",
+        Sl_Ban=soluongdaban,
+        Danh_Gia=-1,
+        Gia_Bl=parse_giaban(giaban),
+        Link_Anh=danhsachhinhanh[-1],
+        Link_Sp=duongdancuasanpham,
+        Dia_Chi_Ban=noiban,
+        ID_Nhom=None,  # TODO
+        ID_Loai=None,  # TODO
+    )
     lis_jso_laz.append(scri_jso)
 
 
@@ -195,27 +295,30 @@ def gethtmlslist_byjson(looplv1, tmdt, classinprod_motadai, classinprod_danhgia,
         )
     dongmotloattabsaumotsolanmomoi: int = 1
     for jsodict in jso:
-        if not allproduct:
+        ion: int or None = allproduct_(i)
+        if ion is None:
             i += 1
-            if i > 13:
+            continue
+        else:
+            if ion < 0:
                 break
-            if i < 7:
-                continue
+            else:
+                i += 1
         url = jsodict['Link_Sp']
         if tmdt == 'la':
             assert driver is not None
             if url.startswith('//'):
                 url = url[2:]
-            url = 'https://' + url
+            if not url.startswith('http'): url = 'https://' + url
             pressescbuttonafterloadpage(driver, url)  # driver.get(url=url)
             sanpham_s: list = findelem(driver, xpath=classinprod_motadai, scroll=True, getall=True)
             jsodict['Mo_Ta'] = '\n'.join([s.text for s in sanpham_s])
             danhgia = findelem(driver, xpath=classinprod_danhgia, scroll=True)
             jsodict['Danh_Gia'] = danhgia.text
             # giaban = findelem(driver, xpath=classgiaban)
-            # jsodict['Gia_Bl'] = giaban.text  # TODO giá bán lẻ trang tổng và trang chi tiết không khớp nhau -> bug_in_laz
+            # jsodict['Gia_Bl'] = giaban.text  # giá bán lẻ trang tổng và trang chi tiết không khớp nhau -> bug_in_laz
             post2api(jsodict)
-        elif tmdt == 'sh':
+        elif tmdt in ('sh', '1688', ):  # elif tmdt == 'sh':
             if cra_html:
                 brow__ser(url=url, scroll=True, dongtab=dongmotloattabsaumotsolanmomoi)
                 dongmotloattabsaumotsolanmomoi += 1
@@ -235,7 +338,7 @@ def pressescbuttonafterloadpage(driver, url):
 
 def gethtmlslist_bycategories(
         driver, fol, danhmuc_s, ad, tmdt, classsanpham,
-        classthongtin=None, classdanhgiadaban=None, classdaban=None, datasqe_danhgia=None, classten=None, classnoiban=None,
+        classthongtin=None, classdanhgiadaban=None, classdaban_=None, classdaban=None, datasqe_danhgia=None, classten=None, classnoiban=None, classgiaban=None,
 ):
     # https://shopee.vn/Đồ-Chơi-cat.11036932
     # https://www.lazada.vn/tag/do-choi-tre-em/?page=0
@@ -248,6 +351,45 @@ def gethtmlslist_bycategories(
     sotrang: int = 9 if allproduct else 2
     for danhmuc in danhmuc_s:
         url_: str = ad + danhmuc
+
+        if tmdt in ('1688',):
+            if not cra_html:
+                continue
+            driver.get(url_)
+            a_cate = findelem(
+                driver,
+                xpath=classsanpham,
+                # scroll=True,
+                getall=True,
+            )
+            link_s: tuple = tuple(get_in4from_elem(elem, 'href') for elem in a_cate)
+            for i, link in enumerate(link_s):
+
+                ion: int or None = allproduct_(i, sotrang)
+                if ion is None:
+                    continue
+                else:
+                    if ion < 0:
+                        break
+
+                driver.execute_script("window.open('');")
+                driver.switch_to.window(driver.window_handles[-1])
+                driver.get(link)
+                a_cate_ = findelem(
+                    driver,
+                    xpath=xpathsanpham_1688,
+                    scroll=True,
+                    getall=True,
+                )
+                for elem in a_cate_:
+                    elem2bs4_(
+                        get_in4from_elem(elem), get_in4from_elem(elem, 'id'), classthongtin, classdanhgiadaban, classdaban_, classdaban, datasqe_danhgia, classten, classnoiban, classgiaban
+                    )
+                driver.close()
+                driver.switch_to.window(driver.window_handles[-1])
+            print()
+            continue
+
         for trang in range(sotrang):
             url: str = url_ + page + str(trang) if trang > 0 else url_
             if tmdt == 'la':
@@ -268,7 +410,7 @@ def gethtmlslist_bycategories(
                             fie='innerhtml',
                         )
                     elem2bs4(
-                        contents, dataitemid, classthongtin, classdanhgiadaban, classdaban, datasqe_danhgia, classten, classnoiban,
+                        contents, dataitemid, classthongtin, classdanhgiadaban, classdaban_, classdaban, datasqe_danhgia, classten, classnoiban,
                     )
             elif tmdt == 'sh':
                 assert classthongtin is None
@@ -298,12 +440,13 @@ def product_in_detail_(looplv2, looplv1, tmdt, classinprod_ten, classinprod_danh
         lis__jso = lis_jso_laz.copy()
     elif tmdt == 'sh':
         lis__jso = lis_jso.copy()
+    elif tmdt == '1688':
+        lis__jso = lis_jso_1688.copy()
     gethtmlslist_byjson(looplv1, tmdt, classinprod_motadai, classinprod_danhgia, driver, jso=lis__jso)
-    if tmdt == 'la':
+    if tmdt in ('la', ):
         return
 
     if debug:
-        jso_erroe = list()
         for thutu, jso in enumerate(lis_jso):
             if any([
                 not jso['Sl_Ban'] > 0,
@@ -314,12 +457,12 @@ def product_in_detail_(looplv2, looplv1, tmdt, classinprod_ten, classinprod_danh
     if debug:
         tenhangtuple: tuple = tuple(jso["Ten_Hang"] for jso in lis__jso)
     posted: int = 0
-    for htMl in html2bs4(product=True):
+    for htMl in html2bs4(product=True, tmdt=tmdt):
         tencuasanpham = None
         for classinprod__ten in classinprod_ten:
             ten_ = htMl.find('div', {"class": classinprod__ten})
             if ten_ is not None:
-                tencuasanpham = ten_.find('span')
+                tencuasanpham = ten_.find('span') if tmdt == 'sh' else ten_
                 break
         if tencuasanpham is None:
             if debug:
@@ -327,20 +470,65 @@ def product_in_detail_(looplv2, looplv1, tmdt, classinprod_ten, classinprod_danh
             continue
 
         motadai = None
-        for classinprod__motadai in classinprod_motadai:
-            motadai = htMl.find('div', {"class": classinprod__motadai})
-            if motadai is not None:
-                break
-        if motadai is None:
+        listmt: list = list()
+        if tmdt == '1688':
+            assert len(classinprod_motadai) == 2
+            itemname_ite_ = htMl.find_all('span', {"class": classinprod_motadai[0]})
+            itemname_ite = iter(itemname_ite_)
+            itemvalu_ite_ = htMl.find_all('span', {"class": classinprod_motadai[1]})
+            itemvalu_ite = iter(itemvalu_ite_)
             if debug:
-                print(tencuasanpham.text, 'không lấy được mô tả!')
-            continue
+                print('yêu cầu hai số lượng (phần mô tả) sau bằng nhau', len(itemname_ite_), len(itemvalu_ite_))
+            motadai: str = ''
+            while True:  # iname will be "end" if iteration is complete
+                iname = next(itemname_ite, "end")
+                if iname == "end":
+                    break
+                ivalu = next(itemvalu_ite)
+                s: str = iname.text + ': ' + ivalu.text + '\n'
+                motadai += s
+
+        else:
+            for classinprod__motadai in classinprod_motadai:
+                motadai = htMl.find('div', {"class": classinprod__motadai})
+                if motadai is not None:
+                    break
+            if motadai is None:
+                if debug:
+                    print('không lấy được mô tả!', tencuasanpham.text, )
+                # continue
+
+        mahang = None
+        noib_an = None
+        if tmdt == '1688':
+            timmahang = htMl.find('a', {"class": findid_class})
+            if timmahang is None:
+                if debug:
+                    print('không lấy được mã hàng!', tencuasanpham.text, )
+            else:
+                mahang = parse_mahang(timmahang.get('href'))
+
+            timnoib_an = htMl.find('span', {"class": noiban_class})
+            if timnoib_an is None:
+                if debug:
+                    print('không tìm được nơi bán trong trang chi tiết!', tencuasanpham.text, )
+            else:
+                noib_an = timnoib_an.text
 
         upd: bool = False
+        if debug:
+            listten: list = [jso["Ten_Hang"] for jso in lis__jso]
         for thutu, jso in enumerate(lis__jso):
-            if oversimplify_string(jso["Ten_Hang"]) == oversimplify_string(tencuasanpham.text):  # '____' + tencuasanpham.text:
-                upd = True
-                lis__jso[thutu]["Mo_Ta"] = motadai.text
+            if tmdt == '1688':
+                if jso["Ma_Hang"] == mahang:
+                    upd = True
+                    if noib_an is not None and not noib_an.strip() == '':
+                        lis__jso[thutu]['Dia_Chi_Ban'] = noib_an
+            else:
+                if oversimplify_string(jso["Ten_Hang"]) == oversimplify_string(tencuasanpham.text):  # '____' + tencuasanpham.text:
+                    upd = True
+            if upd:
+                lis__jso[thutu]["Mo_Ta"] = motadai.text if not isinstance(motadai, str) else motadai
                 posted += 1
                 if db:
                     try:
@@ -382,7 +570,7 @@ def product_in_detail(looplv2, looplv1, tmdt, classinprod_ten, classinprod_danhg
                 break
         if danhgia is None:
             if debug:
-                print(tencuasanpham.text, 'không lấy được đánh giá!')
+                print('không lấy được đánh giá!', tencuasanpham.text, )
             continue
         # assert danhgia is not None
 
@@ -403,7 +591,7 @@ def product_in_detail(looplv2, looplv1, tmdt, classinprod_ten, classinprod_danhg
                 break
         if danhgia is None:
             if debug:
-                print(tencuasanpham.text, 'không lấy được đánh giá!')
+                print('không lấy được đánh giá!', tencuasanpham.text, )
             continue
         # assert danhgia is not None
 
@@ -418,7 +606,7 @@ def product_in_detail(looplv2, looplv1, tmdt, classinprod_ten, classinprod_danhg
                 break
         if motadai is None:
             if debug:
-                print(tencuasanpham.text, 'không lấy được mô tả!')
+                print('không lấy được mô tả!', tencuasanpham.text, )
             continue
         # assert motadai is not None
 
@@ -452,18 +640,18 @@ def crawlfromhtml_(
                 if debug:
                     if jso['name'] == '[HCM] Bộ tranh đính đá hoạt hình tự làm, Comco KÈM KHUNG VÀ DỤNG CỤ - Bộ tranh gắn đá DIY nhiều mẫu':
                         print()
-                scri_jso: dict = {
-                    "Ma_Hang": jso['productID'],  # '____' + jso['productID'],  #
-                    "Ten_Hang": jso['name'],  # '____' + jso['name'],  #
-                    "Mo_Ta": "<string>",
-                    "Sl_Ban": 0,  # soluongdaban,  # "<double>",
-                    "Danh_Gia": float(jso['aggregateRating']['ratingValue']),
-                    "Link_Anh": jso['image'],
-                    "Link_Sp": jso['url'],
-                    "Dia_Chi_Ban": '_',  # noiban.text,
-                    "ID_Nhom": None,  # TODO
-                    "ID_Loai": None  # TODO
-                }
+                scri_jso: dict = form_json(
+                    Ma_Hang=jso['productID'],  # '____' + jso['productID'],  #
+                    Ten_Hang=jso['name'],  # '____' + jso['name'],  #
+                    Mo_Ta="<string>",
+                    Sl_Ban=0,  # soluongdaban,  # "<double>",
+                    Danh_Gia=float(jso['aggregateRating']['ratingValue']),
+                    Link_Anh=jso['image'],
+                    Link_Sp=jso['url'],
+                    Dia_Chi_Ban='_',  # noiban.text,
+                    ID_Nhom=None,  # TODO
+                    ID_Loai=None  # TODO
+                )
                 scri_jso["Gia_Bl"] = jso['offers']['lowPrice'] if 'lowPrice' in jso['offers'] else jso['offers']['price']
                 lis_jso.append(scri_jso)
         sanpham_s = htMl.find_all('li', {"class": lambda x: x and classsanpham in x})
@@ -895,6 +1083,8 @@ def print_on_gui(*args, text_widget, sep=" ", end="\n"):
 
 lis_jso: list = list()
 lis_jso_laz: list = list()
+lis_jso_1688: list = list()
+jso_erroe: list = list()
 initjson()
 ### Create a new tkinter window
 ##root = tk.Tk()
