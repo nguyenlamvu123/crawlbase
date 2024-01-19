@@ -620,6 +620,7 @@ def brow__ser(
     for _ in range(5):
         time.sleep(3)
         pyautogui.scroll(scro)  # Scroll down 10 pixels
+    pyautogui.hotkey('ctrl', 'w')
 
 
 def phant():
