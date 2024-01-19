@@ -9,8 +9,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
 from addr import (
-    loca_l, prename, amongname, sear__ch, masanphamshopee, page, debug, allproduct, cra_html, db,
-    browser_path, danhmucnhom, danhmucloai, scro, sear_ch, headers, postapi,
+    loca_l, html_local, prename, amongname, sear__ch, masanphamshopee, page, debug, allproduct, cra_html, db,
+    browser_path, danhmucnhom, danhmucloai, scro, motsolanmomoi, sear_ch, headers, postapi,
 )
 
 
@@ -83,12 +83,18 @@ def html2bs4(product: bool = False):
         s.startswith(prename),  # tên file bắt đầu bằng chuỗi 'Mua sắm online sản phẩm'
     ])]
     for html in html_s:
-        print(html)
+        if debug:
+            print(html)
+        filename = os.path.join(loca_l, html)
         contents = readfile(
-            file=os.path.join(loca_l, html),
+            file=filename,
             mod="_r"
         )
         htMl = BeautifulSoup(contents, 'html.parser')
+        os.rename(
+            filename,
+            os.path.join(html_local, html),
+        )
         yield htMl
 
 
@@ -141,6 +147,7 @@ def gethtmlslist_byjson(looplv1, tmdt, classinprod_motadai, driver, jso: dict or
             mod="_r",
             jso=True,
         )
+    dongmotloattabsaumotsolanmomoi: int = 1
     for jsodict in jso:
         if not allproduct:
             i += 1
@@ -159,7 +166,8 @@ def gethtmlslist_byjson(looplv1, tmdt, classinprod_motadai, driver, jso: dict or
             print()
         elif tmdt == 'sh':
             if cra_html:
-                brow__ser(url=url, scroll=True)
+                brow__ser(url=url, scroll=True, dongtab=dongmotloattabsaumotsolanmomoi)
+                dongmotloattabsaumotsolanmomoi += 1
 
 
 def gethtmlslist_bycategories(
@@ -612,6 +620,7 @@ def brow__ser(
     url="https://shopee.vn/search?facet=11036946&keyword=do%20choi&noCorrection=true&page=0",
     browser_path=browser_path,
     scroll: bool = False,
+    dongtab: int or None = None,
 ):
     webbrowser.register('custom_browser', None, webbrowser.BackgroundBrowser(browser_path))
     webbrowser.get('custom_browser').open(url)
@@ -620,6 +629,14 @@ def brow__ser(
     for _ in range(5):
         time.sleep(3)
         pyautogui.scroll(scro)  # Scroll down 10 pixels
+    if dongtab is not None:
+        if dongtab % motsolanmomoi == 0:
+            for _ in range(motsolanmomoi - 1):
+                pyautogui.hotkey('ctrl', 'shift', 'tab')
+                time.sleep(1)
+            for _ in range(motsolanmomoi):
+                pyautogui.hotkey('ctrl', 'w')
+                time.sleep(1)
 
 
 def phant():
