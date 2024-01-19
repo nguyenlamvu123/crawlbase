@@ -3,12 +3,12 @@ import tkinter as tk
 
 from funct import (
     # readfile, findelem, clickkk, dangnhap, thich, spam, root, text_widget,
-    print_on_gui, delete_cache, getin4, stopandkillthread, brow__ser, gethtmlslist_bycategories, crawlfromhtml,
-    gethtmlslist_bysearch, product_in_detail, chrooome,
+    print_on_gui, delete_cache, stopandkillthread, brow__ser, gethtmlslist_bycategories, crawlfromhtml, crawlfromhtml_,
+    gethtmlslist_bysearch, product_in_detail, product_in_detail_, chrooome,
 )
-from addr import tmdt
+from addr import tmdt_s, add_r, cra_html
 
-# Hàm thực thi cho mỗi luồng
+# # Hàm thực thi cho mỗi luồng
 # def work(email, passw, falivetok, fanpage):
 #     sema.acquire()
 #     driver = dangnhap(text_widget, email, passw, falivetok)
@@ -19,43 +19,67 @@ from addr import tmdt
 #     driver = thich(driver=driver, fanpage=fanpage, li=switchpage)
 #     spam(driver)
 #     sema.release()
-
-
-def worker(email, passw, falivetok, fanpage, thread_id: int or None = None):
-    if thread_id is not None:
-        print(f"Luồng {thread_id} đang làm việc")
-    t1 = threading.Thread(target=work, args=(email, passw, falivetok, fanpage, ))
-    t1.start()
-
-
-def mult_thre():
-    # Tạo một danh sách các luồng
-    threads = []
-    for em_pa in getin4():
-        email_, passw_, falivetok_, fanpage_ = em_pa[0], em_pa[1], em_pa[2], em_pa[3]
-
-        thread = threading.Thread(
-            target=worker,
-            args=(email_, passw_, falivetok_, fanpage_, len(threads),)
-        )
-        thread.start()
-        threads.append(thread)
-
-    # # Đợi cho tất cả các luồng hoàn thành
-    # for thread in threads:
-    #     thread.join()
-
-    print("Tất cả các luồng đã hoàn thành công việc")
+#
+#
+# def worker(email, passw, falivetok, fanpage, thread_id: int or None = None):
+#     if thread_id is not None:
+#         print(f"Luồng {thread_id} đang làm việc")
+#     t1 = threading.Thread(target=work, args=(email, passw, falivetok, fanpage, ))
+#     t1.start()
+#
+#
+# def mult_thre():
+#     # Tạo một danh sách các luồng
+#     threads = []
+#     for em_pa in getin4():
+#         email_, passw_, falivetok_, fanpage_ = em_pa[0], em_pa[1], em_pa[2], em_pa[3]
+#
+#         thread = threading.Thread(
+#             target=worker,
+#             args=(email_, passw_, falivetok_, fanpage_, len(threads),)
+#         )
+#         thread.start()
+#         threads.append(thread)
+#
+#     # # Đợi cho tất cả các luồng hoàn thành
+#     # for thread in threads:
+#     #     thread.join()
+#
+#     print("Tất cả các luồng đã hoàn thành công việc")
 
 
 if __name__ == '__main__':
-    if tmdt == 'la':
-        gethtmlslist_bycategories()  # -> looplv1.json                             # crawl_Lazada
-    elif tmdt == 'sh':
-        gethtmlslist_bycategories()  # -> html files                               # crawl_shopee_by_html
-        # gethtmlslist_bysearch(keyword="%C4%91%E1%BB%93%20ch%C6%A1i")             # crawl_shopee_by_html
-        crawlfromhtml()  # -> looplv1.json                                         # crawl_shopee_by_html
-    product_in_detail()  # -> looplv2.json                                     # crawl_shopee_by_html
+    looplv2, looplv1, classsanpham, driver = None, None, None, None
+    for tmdt in tmdt_s:
+        (
+            fol, ad, danhmuc_s, classsanpham, classthongtin, classten, classdanhgiadaban, datasqe_danhgia,
+            classdaban, classnoiban, classgiaban, classinprod_ten, classinprod_danhgia, classinprod_motadai
+        ) = add_r(tmdt)
+        assert fol is not None
+        if tmdt == 'la':
+            if driver is None:
+                driver = chrooome()
+            looplv2, looplv1 = gethtmlslist_bycategories(
+                driver, fol, danhmuc_s, ad, tmdt, classsanpham,
+                classthongtin, classdanhgiadaban, classdaban, datasqe_danhgia, classten
+            )  # -> looplv1.json
+            product_in_detail(
+                looplv2, looplv1, tmdt, classinprod_ten, classinprod_danhgia, classinprod_motadai, driver
+            )  # -> looplv2.json
+            driver.quit()
+        elif tmdt == 'sh':
+            if driver is not None:
+                driver = None
+            if cra_html:
+                looplv2, looplv1 = gethtmlslist_bycategories(driver, fol, danhmuc_s, ad, tmdt, classsanpham)  # -> html files
+            # gethtmlslist_bysearch(keyword="%C4%91%E1%BB%93%20ch%C6%A1i")
+            crawlfromhtml_(
+                looplv1, classsanpham, classthongtin, classten, classdanhgiadaban, datasqe_danhgia, classdaban,
+                classnoiban, classgiaban
+            )  # -> looplv1.json
+            product_in_detail_(
+                looplv2, looplv1, tmdt, classinprod_ten, classinprod_danhgia, classinprod_motadai, driver
+            )  # -> looplv2.json
     # # num_threads: int = 4
     # # sema = threading.Semaphore(value=num_threads)
     # # Bsthread = tk.Button(
