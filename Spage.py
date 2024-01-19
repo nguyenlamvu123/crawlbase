@@ -3,10 +3,10 @@ import tkinter as tk
 
 from funct import (
     # readfile, findelem, clickkk, dangnhap, thich, spam, root, text_widget,
-    print_on_gui, delete_cache, stopandkillthread, brow__ser, gethtmlslist_bycategories, crawlfromhtml,
-    gethtmlslist_bysearch, product_in_detail, chrooome,
+    print_on_gui, delete_cache, stopandkillthread, brow__ser, gethtmlslist_bycategories, crawlfromhtml, crawlfromhtml_,
+    gethtmlslist_bysearch, product_in_detail, product_in_detail_, chrooome,
 )
-from addr import tmdt_s, add_r
+from addr import tmdt_s, add_r, cra_html
 
 # # Hàm thực thi cho mỗi luồng
 # def work(email, passw, falivetok, fanpage):
@@ -50,8 +50,6 @@ from addr import tmdt_s, add_r
 
 if __name__ == '__main__':
     looplv2, looplv1, classsanpham, driver = None, None, None, None
-
-
     for tmdt in tmdt_s:
         (
             fol, ad, danhmuc_s, classsanpham, classthongtin, classten, classdanhgiadaban, datasqe_danhgia,
@@ -72,13 +70,14 @@ if __name__ == '__main__':
         elif tmdt == 'sh':
             if driver is not None:
                 driver = None
-            looplv2, looplv1 = gethtmlslist_bycategories(driver, fol, danhmuc_s, ad, tmdt, classsanpham)  # -> html files
+            if cra_html:
+                looplv2, looplv1 = gethtmlslist_bycategories(driver, fol, danhmuc_s, ad, tmdt, classsanpham)  # -> html files
             # gethtmlslist_bysearch(keyword="%C4%91%E1%BB%93%20ch%C6%A1i")
-            crawlfromhtml(
+            crawlfromhtml_(
                 looplv1, classsanpham, classthongtin, classten, classdanhgiadaban, datasqe_danhgia, classdaban,
                 classnoiban, classgiaban
             )  # -> looplv1.json
-            product_in_detail(
+            product_in_detail_(
                 looplv2, looplv1, tmdt, classinprod_ten, classinprod_danhgia, classinprod_motadai, driver
             )  # -> looplv2.json
     # # num_threads: int = 4

@@ -23,6 +23,8 @@ headers = {
 
 debug: bool = True  # active or inactive print()
 allproduct: bool = True  # crawl all product or just illustrate
+cra_html: bool = False
+
 page: str = '?page='
 sear_ch: str = '&page='
 sear__ch: str = '/search?keyword='

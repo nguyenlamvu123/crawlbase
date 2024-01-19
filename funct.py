@@ -9,9 +9,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
 from addr import (
-    loca_l, prename, amongname, sear__ch, masanphamshopee, page, debug, allproduct, scro, sear_ch,
-    browser_path, danhmucnhom, danhmucloai,
-    headers,
+    loca_l, prename, amongname, sear__ch, masanphamshopee, page, debug, allproduct, cra_html,
+    browser_path, danhmucnhom, danhmucloai, scro, sear_ch, headers,
 )
 
 
@@ -156,7 +155,8 @@ def gethtmlslist_byjson(looplv1, tmdt, classinprod_motadai, driver, jso: dict or
             sanpham_s: list = findelem(driver, xpath=classinprod_motadai, scroll=True, getall=True)
             print()
         elif tmdt == 'sh':
-            brow__ser(url=url, scroll=True)
+            if cra_html:
+                brow__ser(url=url, scroll=True)
 
 
 def gethtmlslist_bycategories(
@@ -216,6 +216,52 @@ def gethtmlslist_bysearch(ad, keyword: str = "%C4%91%E1%BB%93%20ch%C6%A1i"):
             time.sleep(3)
 
 
+def product_in_detail_(looplv2, looplv1, tmdt, classinprod_ten, classinprod_danhgia, classinprod_motadai, driver):
+    gethtmlslist_byjson(looplv1, tmdt, classinprod_motadai, driver, jso=lis_jso)
+
+    if debug:
+        jso_erroe = list()
+        for thutu, jso in enumerate(lis_jso):
+            if any([
+                not jso['Sl_Ban'] > 0,
+                jso['Dia_Chi_Ban'] == '_',
+            ]):
+                jso_erroe.append(jso)
+
+    lis__jso = lis_jso.copy()
+    for htMl in html2bs4(product=True):
+        tencuasanpham = None
+        for classinprod__ten in classinprod_ten:
+            ten_ = htMl.find('div', {"class": classinprod__ten})
+            if ten_ is not None:
+                tencuasanpham = ten_.find('span')
+                break
+        if tencuasanpham is None:
+            continue
+
+        motadai = None
+        for classinprod__motadai in classinprod_motadai:
+            motadai = htMl.find('div', {"class": classinprod__motadai})
+            if motadai is not None:
+                break
+        if motadai is None:
+            if debug:
+                print(tencuasanpham.text, 'không lấy được mô tả!')
+            continue
+
+        upd: bool = False
+        for thutu, jso in enumerate(lis__jso):
+            if jso["Ten_Hang"] == tencuasanpham.text:
+                upd = True
+                lis__jso[thutu]["Mo_Ta"] = motadai.text
+                break
+        if not upd:
+            if debug:
+                print()
+    post2api(lis__jso)
+    # readfile(file=looplv2, mod="w", cont=jso, jso=True)
+
+
 def product_in_detail(looplv2, looplv1, tmdt, classinprod_ten, classinprod_danhgia, classinprod_motadai, driver):
     gethtmlslist_byjson(looplv1, tmdt, classinprod_motadai, driver, jso=lis_jso)
     lis__jso = lis_jso.copy()
@@ -270,6 +316,71 @@ def product_in_detail(looplv2, looplv1, tmdt, classinprod_ten, classinprod_danhg
     # readfile(file=looplv2, mod="w", cont=jso, jso=True)
 
 
+def crawlfromhtml_(
+        looplv1, classsanpham, classthongtin, classten, classdanhgiadaban, datasqe_danhgia, classdaban,
+        classnoiban=None, classgiaban=None
+):
+    for htMl in html2bs4():
+        scri_s = htMl.find_all('script', {"type": "application/ld+json"})  # //script[@type="application/ld+json"]
+        for scri in scri_s:
+            for cont in scri.contents:
+                if debug:
+                    print(cont)
+                jso: dict = json.loads(cont)
+                if not jso['@type'] == 'Product':
+                    continue
+                if debug:
+                    if jso['productID'] == '25550854198':
+                        print()
+                scri_jso: dict = {
+                    "Ma_Hang": jso['productID'],  # '_' + jso['productID'],
+                    "Ten_Hang": jso['name'],  # '_' + jso['name'],
+                    "Mo_Ta": "<string>",
+                    "Sl_Ban": 0,  # soluongdaban,  # "<double>",
+                    "Danh_Gia": float(jso['aggregateRating']['ratingValue']),
+                    "Link_Anh": jso['image'],
+                    "Link_Sp": jso['url'],
+                    "Dia_Chi_Ban": '_',  # noiban.text,
+                    "ID_Nhom": None,
+                    "ID_Loai": None
+                }
+                scri_jso["Gia_Bl"] = jso['offers']['lowPrice'] if 'lowPrice' in jso['offers'] else jso['offers']['price']
+                lis_jso.append(scri_jso)
+        sanpham_s = htMl.find_all('li', {"class": lambda x: x and classsanpham in x})
+        for sanpham in sanpham_s:
+            link = sanpham.find('a', {"href": True})
+            if link is None:  # trường hợp javascrip chưa kịp sinh code html phía dưới
+                continue
+            if debug:
+                print(link.get("href"))
+            thongtin_s = link.find_all('div', {"class": classthongtin})
+            if debug:
+                print("len(thongtin_s):", len(thongtin_s))
+            # assert len(thongtin_s) == 1
+            thongtin = thongtin_s[0]
+            ten = thongtin.find('div', {"class": classten})
+            tencuasanpham: str = ten.text
+            if debug:
+                print('ten:', ten.text)
+            noiban = thongtin.find('div', {"class": classnoiban})
+            if debug:
+                print('noi ban:', noiban.text)
+            danhgia_daban = thongtin.find('div', {"class": classdanhgiadaban})
+            daban = danhgia_daban.find('div', {"class": lambda x: x and classdaban in x})
+            if debug:
+                print("đã bán:", daban.text)
+            soluongdaban: int = parse_soluong(daban.text)
+            for thutu, jso in enumerate(lis_jso):
+                if jso["Ten_Hang"] == tencuasanpham:
+                    lis_jso[thutu]["Sl_Ban"] = soluongdaban
+                    lis_jso[thutu]["Dia_Chi_Ban"] = noiban.text
+                    break
+    if debug:
+        lis__jso = lis_jso.copy()
+        print()
+
+
+
 def crawlfromhtml(
         looplv1, classsanpham, classthongtin, classten, classdanhgiadaban, datasqe_danhgia, classdaban,
         classnoiban=None, classgiaban=None
@@ -314,7 +425,6 @@ def crawlfromhtml(
             soluongdaban: int = parse_soluong(daban.text)
 
             lis_jso.append({
-                # "ID": len(lis_jso),  # TODO
                 "Ma_Hang": masanpham,
                 "Ten_Hang": tencuasanpham,
                 "Mo_Ta": "<string>",
