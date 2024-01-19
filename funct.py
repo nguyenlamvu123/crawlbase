@@ -1,4 +1,4 @@
-import json, requests, os, pyautogui, time
+import json, requests, os, pyautogui, time, webbrowser
 # from tkinter import messagebox
 
 from bs4 import BeautifulSoup
@@ -9,8 +9,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
 from addr import (
-    loca_l, prename, amongname, sear__ch, masanphamshopee, page, debug, allproduct, cra_html,
-    browser_path, danhmucnhom, danhmucloai, scro, sear_ch, headers,
+    loca_l, prename, amongname, sear__ch, masanphamshopee, page, debug, allproduct, cra_html, db,
+    browser_path, danhmucnhom, danhmucloai, scro, sear_ch, headers, postapi,
 )
 
 
@@ -58,14 +58,17 @@ def initjson():
     )
 
 
-def post2api(lis__jso):
-    url = "https://api01.nhasachtientho.vn/api/DmHang/Add"
-    for jso in lis__jso:
-        payload = json.dumps(jso)
-        response = requests.request("POST", url, headers=headers, data=payload)
-        if not response.status_code == 200:
-            print('><><><><>< !!!!!!!!!', response.status_code, response.text, payload)
-            continue
+def oversimplify_string(s: str) -> str:
+    return s.strip().lower()\
+        .replace(' ', '')
+
+
+def post2api(jso):
+    payload = json.dumps(jso)
+    response = requests.request("POST", postapi, headers=headers, data=payload)
+    if not response.status_code == 200:
+        print('><><><><>< !!!!!!!!!', response.status_code, response.text, payload)
+    else:
         print(response.text)
 
 
@@ -229,6 +232,9 @@ def product_in_detail_(looplv2, looplv1, tmdt, classinprod_ten, classinprod_danh
                 jso_erroe.append(jso)
 
     lis__jso = lis_jso.copy()
+    if debug:
+        tenhangtuple: tuple = tuple(jso["Ten_Hang"] for jso in lis__jso)
+    posted: int = 0
     for htMl in html2bs4(product=True):
         tencuasanpham = None
         for classinprod__ten in classinprod_ten:
@@ -237,6 +243,8 @@ def product_in_detail_(looplv2, looplv1, tmdt, classinprod_ten, classinprod_danh
                 tencuasanpham = ten_.find('span')
                 break
         if tencuasanpham is None:
+            if debug:
+                print()
             continue
 
         motadai = None
@@ -251,14 +259,22 @@ def product_in_detail_(looplv2, looplv1, tmdt, classinprod_ten, classinprod_danh
 
         upd: bool = False
         for thutu, jso in enumerate(lis__jso):
-            if jso["Ten_Hang"] == tencuasanpham.text:
+            if oversimplify_string(jso["Ten_Hang"]) == oversimplify_string(tencuasanpham.text):  # '____' + tencuasanpham.text:
                 upd = True
                 lis__jso[thutu]["Mo_Ta"] = motadai.text
+                posted += 1
+                if db:
+                    try:
+                        post2api(jso)  # TODO có chấp nhận không lấy được mô tả vẫn post lên hay không
+                    except requests.exceptions.ConnectionError:
+                        pass
                 break
         if not upd:
             if debug:
                 print()
-    post2api(lis__jso)
+    else:
+        if debug:
+            print()
     # readfile(file=looplv2, mod="w", cont=jso, jso=True)
 
 
@@ -266,6 +282,27 @@ def product_in_detail(looplv2, looplv1, tmdt, classinprod_ten, classinprod_danhg
     gethtmlslist_byjson(looplv1, tmdt, classinprod_motadai, driver, jso=lis_jso)
     lis__jso = lis_jso.copy()
     for htMl in html2bs4(product=True):
+        tencuasanpham = None
+        for classinprod__ten in classinprod_ten:
+            ten_ = htMl.find('div', {"class": classinprod__ten})
+            if ten_ is not None:
+                tencuasanpham = ten_.find('span')
+                break
+        if tencuasanpham is None:
+            continue
+        # assert tencuasanpham is not None
+
+        danhgia = None
+        for classinprod__danhgia in classinprod_danhgia:
+            danhgia = htMl.find('div', {"class": classinprod__danhgia})
+            if danhgia is not None:
+                break
+        if danhgia is None:
+            if debug:
+                print(tencuasanpham.text, 'không lấy được đánh giá!')
+            continue
+        # assert danhgia is not None
+
         tencuasanpham = None
         for classinprod__ten in classinprod_ten:
             ten_ = htMl.find('div', {"class": classinprod__ten})
@@ -304,7 +341,7 @@ def product_in_detail(looplv2, looplv1, tmdt, classinprod_ten, classinprod_danhg
 
         upd: bool = False
         for thutu, jso in enumerate(lis__jso):
-            if jso["Ten_Hang"] == tencuasanpham.text:
+            if oversimplify_string(jso["Ten_Hang"]) == oversimplify_string(tencuasanpham.text):
                 upd = True
                 lis__jso[thutu]["Mo_Ta"] = motadai.text
                 lis__jso[thutu]["Danh_Gia"] = danhgia.text
@@ -330,11 +367,11 @@ def crawlfromhtml_(
                 if not jso['@type'] == 'Product':
                     continue
                 if debug:
-                    if jso['productID'] == '25550854198':
+                    if jso['name'] == '[HCM] Bộ tranh đính đá hoạt hình tự làm, Comco KÈM KHUNG VÀ DỤNG CỤ - Bộ tranh gắn đá DIY nhiều mẫu':
                         print()
                 scri_jso: dict = {
-                    "Ma_Hang": jso['productID'],  # '_' + jso['productID'],
-                    "Ten_Hang": jso['name'],  # '_' + jso['name'],
+                    "Ma_Hang": jso['productID'],  # '____' + jso['productID'],  #
+                    "Ten_Hang": jso['name'],  # '____' + jso['name'],  #
                     "Mo_Ta": "<string>",
                     "Sl_Ban": 0,  # soluongdaban,  # "<double>",
                     "Danh_Gia": float(jso['aggregateRating']['ratingValue']),
@@ -371,7 +408,7 @@ def crawlfromhtml_(
                 print("đã bán:", daban.text)
             soluongdaban: int = parse_soluong(daban.text)
             for thutu, jso in enumerate(lis_jso):
-                if jso["Ten_Hang"] == tencuasanpham:
+                if oversimplify_string(jso["Ten_Hang"]) == oversimplify_string(tencuasanpham):  # '____' + tencuasanpham:
                     lis_jso[thutu]["Sl_Ban"] = soluongdaban
                     lis_jso[thutu]["Dia_Chi_Ban"] = noiban.text
                     break
@@ -576,7 +613,6 @@ def brow__ser(
     browser_path=browser_path,
     scroll: bool = False,
 ):
-    import webbrowser
     webbrowser.register('custom_browser', None, webbrowser.BackgroundBrowser(browser_path))
     webbrowser.get('custom_browser').open(url)
     if not scroll:

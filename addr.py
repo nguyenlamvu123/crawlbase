@@ -2,9 +2,8 @@ from sys import platform
 
 
 tmdt_s: list = [
-    'sh',
-    # 'la',
-    # 'ta',
+    # 'sh',
+    'la',
 ]
 danhmucnhom: list = [
     'Đồ chơi',
@@ -23,7 +22,8 @@ headers = {
 
 debug: bool = True  # active or inactive print()
 allproduct: bool = True  # crawl all product or just illustrate
-cra_html: bool = False
+cra_html: bool = False  # crawl html files or not
+db: bool = True  # request to db or not
 
 page: str = '?page='
 sear_ch: str = '&page='
@@ -31,6 +31,7 @@ sear__ch: str = '/search?keyword='
 masanphamshopee: str = '&xptdk='
 prename: str = 'Mua sắm online sản phẩm'
 amongname: str = 'Shopee Việt Nam'
+postapi = "https://api01.nhasachtientho.vn/api/DmHang/Add"
 
 
 def add_r(tmdt):
@@ -40,24 +41,7 @@ def add_r(tmdt):
     ) = (
         None, None, None, None, None, None, None, None, None, None, None, None, None, None
     )
-    if tmdt == 'ta':
-        fol: str = 'tao'
-        ad: str = "https://world.taobao.com/"
-        danhmuc_s: list = [
-            '_',
-        ]
-
-        classsanpham: str = '_'
-        classthongtin: str = '//a[@class="first-category-wrap"]'
-        classten: str = "_"
-        classdanhgiadaban: str = "_"
-        datasqe_danhgia: str = "_"
-        classdaban: str = "_"
-
-        classinprod_ten: str = "_"
-        classinprod_danhgia: str = "_"
-        classinprod_motadai: str = '_'
-    elif tmdt == 'la':
+    if tmdt == 'la':
         fol: str = 'laz'
         ad: str = "https://www.lazada.vn"
         danhmuc_s: list = [
