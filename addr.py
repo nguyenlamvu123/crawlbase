@@ -1,9 +1,9 @@
 from sys import platform
-
+import datetime, os
 
 tmdt_s: list = [
-    # 'sh',
-    'la',
+    'sh',
+    # 'la',
 ]
 danhmucnhom: list = [
     'Đồ chơi',
@@ -22,7 +22,7 @@ headers = {
 
 debug: bool = True  # active or inactive print()
 allproduct: bool = True  # crawl all product or just illustrate
-cra_html: bool = False  # crawl html files or not
+cra_html: bool = True  # crawl html files or not
 db: bool = True  # request to db or not
 
 page: str = '?page='
@@ -118,6 +118,7 @@ def add_r(tmdt):
     )
 
 scro: int = -10
+motsolanmomoi: int = 5  # số lần mở tab mới mà sau số lần này sẽ lùi lại các tab trước đó để đóng tab
 
 if platform == "win32":
     loca_l: str = r'C:\Users\HLC\Downloads'
@@ -126,3 +127,9 @@ else:
     assert platform == "linux" or platform == "linux2"
     loca_l: str = '/home/zaibachkhoa/Downloads/'
     browser_path: str = "/usr/bin/google-chrome"
+t: str = datetime.datetime.now().strftime('%Y%m%d%H%M')
+html_local = os.path.join(
+    loca_l,
+    'html_shopee' + t,
+)
+os.mkdir(html_local)
