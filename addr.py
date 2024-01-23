@@ -2,8 +2,8 @@ from sys import platform
 import datetime, os
 
 tmdt_s: list = [
-    'sh',
-    # 'la',
+    # 'sh',
+    'la',
 ]
 danhmucnhom: list = [
     'Đồ chơi',
@@ -54,9 +54,11 @@ def add_r(tmdt):
         classdanhgiadaban: str = "aBrP0"
         datasqe_danhgia: str = "picture-wrapper"  # hình ảnh
         classdaban: str = "_6uN7R"
+        classnoiban: str = "oa6ri"
+        classgiaban: str = '//div[@class="pdp-product-price"]//span[contains(@class, "price_color_orange")]'
 
         classinprod_ten: str = "_"
-        classinprod_danhgia: str = "_"
+        classinprod_danhgia: str = '//span[@class="score-average"]'
         classinprod_motadai: str = '//div[@class="pdp-product-detail"]'
     elif tmdt == 'sh':
         fol: str = 'sho'

@@ -1,4 +1,4 @@
-import json, requests, os, pyautogui, time, webbrowser
+import json, requests, os, pyautogui, time, webbrowser, threading
 # from tkinter import messagebox
 
 from bs4 import BeautifulSoup
@@ -63,13 +63,45 @@ def oversimplify_string(s: str) -> str:
         .replace(' ', '')
 
 
-def post2api(jso):
-    payload = json.dumps(jso)
-    response = requests.request("POST", postapi, headers=headers, data=payload)
-    if not response.status_code == 200:
-        print('><><><><>< !!!!!!!!!', response.status_code, response.text, payload)
+def parse_soluong(soluongdaban: str) -> int:  # just only shopee
+    """
+    'Đã bán 789'
+    'Đã bán 4,3k'
+    'Đã bán 1,7tr'
+    """
+    # assert soluongdaban.startswith('Đã bán ')
+    if not soluongdaban.startswith('Đã bán '):
+        ret: int = -1
+    elif soluongdaban.endswith('k'):
+        ret: int = int(float(
+            soluongdaban.replace('Đã bán ', '').replace('k', '').replace(',', '.')
+        ) * 1000)
+    elif soluongdaban.endswith('tr'):
+        ret: int = int(float(
+            soluongdaban.replace('Đã bán ', '').replace('tr', '').replace(',', '.')
+        ) * 1000000)
     else:
-        print(response.text)
+        ret: int = int(soluongdaban.replace('Đã bán ', ''))
+    return ret
+
+
+def parse_giaban(giaban: str) -> int:  # just only lazada
+    # '310.000 ₫'
+    # '911 Đã bán'
+    return int(''.join([s for s in giaban if s.isdigit()]))
+
+
+def post2api(jso):
+    try:
+        payload = json.dumps(jso)
+        response = requests.request("POST", postapi, headers=headers, data=payload)
+        if not response.status_code == 200:
+            print('><><><><>< !!!!!!!!!', response.status_code, response.text, payload)
+        else:
+            print(response.text)
+    except requests.exceptions.ConnectionError:
+        print('><><><><>< !!!!!!!!! requests.exceptions.ConnectionError')
+
 
 
 def html2bs4(product: bool = False):
@@ -98,7 +130,7 @@ def html2bs4(product: bool = False):
         yield htMl
 
 
-def elem2bs4(contents, dataitemid, classthongtin, classdanhgiadaban, classdaban, datasqe_danhgia, classten):
+def elem2bs4(contents, dataitemid, classthongtin, classdanhgiadaban, classdaban, datasqe_danhgia, classten, classnoiban):
     htMl = BeautifulSoup(contents, 'html.parser')
     thongtin_ = htMl.find('div', {"class": classthongtin})
     giaban_ = htMl.find('div', {"class": classdanhgiadaban})
@@ -119,11 +151,18 @@ def elem2bs4(contents, dataitemid, classthongtin, classdanhgiadaban, classdaban,
     else:
         giaban = giaban[0].text
 
+    noiban = soluongdaban_.find('span', {"class": classnoiban})
+    if noiban is None:
+        if debug: print(tencuasanpham, "-", duongdancuasanpham, "không tìm thấy nơi bán")
+    else:
+        noiban = noiban.text
+
     soluongdaban = soluongdaban_.find('span', {"class": "_1cEkb"})
     if soluongdaban is None:
         if debug: print(tencuasanpham, "-", duongdancuasanpham, "không tìm thấy số lượng đã bán")
+        soluongdaban: int = 0
     else:
-        soluongdaban = soluongdaban.text
+        soluongdaban: int = parse_giaban(soluongdaban.text)
 
     danhsachhinhanh = danhsachhinhanh_.find('img')
     if danhsachhinhanh is None:
@@ -131,16 +170,23 @@ def elem2bs4(contents, dataitemid, classthongtin, classdanhgiadaban, classdaban,
     else:
         danhsachhinhanh: list = [danhsachhinhanh.get('src'), ]
 
-    jso_laz[tencuasanpham] = {
-        'link': duongdancuasanpham,
-        'id': dataitemid,
-        'số lượng đã bán': soluongdaban,
-        'giá bán': giaban,
-        'hình ảnh': danhsachhinhanh,
+    scri_jso: dict = {
+        "Ma_Hang": dataitemid,
+        "Ten_Hang": tencuasanpham,
+        "Mo_Ta": "<string>",
+        "Sl_Ban": soluongdaban,
+        "Danh_Gia": -1,
+        "Gia_Bl": parse_giaban(giaban),
+        "Link_Anh": danhsachhinhanh[-1],
+        "Link_Sp": duongdancuasanpham,
+        "Dia_Chi_Ban": noiban,
+        "ID_Nhom": None,  # TODO
+        "ID_Loai": None  # TODO
     }
+    lis_jso_laz.append(scri_jso)
 
 
-def gethtmlslist_byjson(looplv1, tmdt, classinprod_motadai, driver, jso: dict or None = None, i=0):
+def gethtmlslist_byjson(looplv1, tmdt, classinprod_motadai, classinprod_danhgia, driver, jso: dict or None = None, i=0):
     if jso is None:
         jso: dict = readfile(
             file=looplv1,
@@ -161,18 +207,35 @@ def gethtmlslist_byjson(looplv1, tmdt, classinprod_motadai, driver, jso: dict or
             if url.startswith('//'):
                 url = url[2:]
             url = 'https://' + url
-            driver.get(url=url)  # TODO
+            pressescbuttonafterloadpage(driver, url)  # driver.get(url=url)
             sanpham_s: list = findelem(driver, xpath=classinprod_motadai, scroll=True, getall=True)
-            print()
+            jsodict['Mo_Ta'] = '\n'.join([s.text for s in sanpham_s])
+            danhgia = findelem(driver, xpath=classinprod_danhgia, scroll=True)
+            jsodict['Danh_Gia'] = danhgia.text
+            # giaban = findelem(driver, xpath=classgiaban)
+            # jsodict['Gia_Bl'] = giaban.text  # TODO giá bán lẻ trang tổng và trang chi tiết không khớp nhau -> bug_in_laz
+            post2api(jsodict)
         elif tmdt == 'sh':
             if cra_html:
                 brow__ser(url=url, scroll=True, dongtab=dongmotloattabsaumotsolanmomoi)
                 dongmotloattabsaumotsolanmomoi += 1
 
 
+def buttonaftersomeseconds(sec: int = 10, butt: str = 'esc'):
+    time.sleep(sec)
+    pyautogui.press(butt)
+
+
+def pressescbuttonafterloadpage(driver, url):
+    t1 = threading.Thread(target=buttonaftersomeseconds)
+    t1.start()
+    driver.get(url)
+    t1.join()
+
+
 def gethtmlslist_bycategories(
         driver, fol, danhmuc_s, ad, tmdt, classsanpham,
-        classthongtin=None, classdanhgiadaban=None, classdaban=None, datasqe_danhgia=None, classten=None
+        classthongtin=None, classdanhgiadaban=None, classdaban=None, datasqe_danhgia=None, classten=None, classnoiban=None,
 ):
     # https://shopee.vn/Đồ-Chơi-cat.11036932
     # https://www.lazada.vn/tag/do-choi-tre-em/?page=0
@@ -189,7 +252,7 @@ def gethtmlslist_bycategories(
             url: str = url_ + page + str(trang) if trang > 0 else url_
             if tmdt == 'la':
                 assert driver is not None
-                driver.get(url)
+                pressescbuttonafterloadpage(driver, url)
                 sanpham_s: list = findelem(driver, xpath=classsanpham, scroll=True, getall=True)
                 for sanpham in sanpham_s:
                     dataitemid = get_in4from_elem(
@@ -205,13 +268,15 @@ def gethtmlslist_bycategories(
                             fie='innerhtml',
                         )
                     elem2bs4(
-                        contents, dataitemid, classthongtin, classdanhgiadaban, classdaban, datasqe_danhgia, classten
+                        contents, dataitemid, classthongtin, classdanhgiadaban, classdaban, datasqe_danhgia, classten, classnoiban,
                     )
             elif tmdt == 'sh':
                 assert classthongtin is None
                 brow__ser(url=url, scroll=True)
     if tmdt == 'la':
-        readfile(file=looplv1, mod="w", cont=jso_laz, jso=True)
+        if debug:
+            lis__jso = lis_jso_laz.copy()
+        # readfile(file=looplv1, mod="w", cont=lis_jso_laz, jso=True)
     return looplv2, looplv1
 
 
@@ -228,7 +293,14 @@ def gethtmlslist_bysearch(ad, keyword: str = "%C4%91%E1%BB%93%20ch%C6%A1i"):
 
 
 def product_in_detail_(looplv2, looplv1, tmdt, classinprod_ten, classinprod_danhgia, classinprod_motadai, driver):
-    gethtmlslist_byjson(looplv1, tmdt, classinprod_motadai, driver, jso=lis_jso)
+    lis__jso = None
+    if tmdt == 'la':
+        lis__jso = lis_jso_laz.copy()
+    elif tmdt == 'sh':
+        lis__jso = lis_jso.copy()
+    gethtmlslist_byjson(looplv1, tmdt, classinprod_motadai, classinprod_danhgia, driver, jso=lis__jso)
+    if tmdt == 'la':
+        return
 
     if debug:
         jso_erroe = list()
@@ -239,7 +311,6 @@ def product_in_detail_(looplv2, looplv1, tmdt, classinprod_ten, classinprod_danh
             ]):
                 jso_erroe.append(jso)
 
-    lis__jso = lis_jso.copy()
     if debug:
         tenhangtuple: tuple = tuple(jso["Ten_Hang"] for jso in lis__jso)
     posted: int = 0
@@ -287,8 +358,12 @@ def product_in_detail_(looplv2, looplv1, tmdt, classinprod_ten, classinprod_danh
 
 
 def product_in_detail(looplv2, looplv1, tmdt, classinprod_ten, classinprod_danhgia, classinprod_motadai, driver):
-    gethtmlslist_byjson(looplv1, tmdt, classinprod_motadai, driver, jso=lis_jso)
-    lis__jso = lis_jso.copy()
+    lis__jso = None
+    if tmdt == 'la':
+        lis__jso = lis_jso_laz.copy()
+    elif tmdt == 'sh':
+        lis__jso = lis_jso.copy()
+    gethtmlslist_byjson(looplv1, tmdt, classinprod_motadai, classinprod_danhgia, driver, jso=lis__jso)
     for htMl in html2bs4(product=True):
         tencuasanpham = None
         for classinprod__ten in classinprod_ten:
@@ -386,8 +461,8 @@ def crawlfromhtml_(
                     "Link_Anh": jso['image'],
                     "Link_Sp": jso['url'],
                     "Dia_Chi_Ban": '_',  # noiban.text,
-                    "ID_Nhom": None,
-                    "ID_Loai": None
+                    "ID_Nhom": None,  # TODO
+                    "ID_Loai": None  # TODO
                 }
                 scri_jso["Gia_Bl"] = jso['offers']['lowPrice'] if 'lowPrice' in jso['offers'] else jso['offers']['price']
                 lis_jso.append(scri_jso)
@@ -479,32 +554,10 @@ def crawlfromhtml(
                 "Link_Anh": danhsachhinhanh[-1],
                 "Link_Sp": duongdancuasanpham,
                 "Dia_Chi_Ban": noiban.text,
-                "ID_Nhom": None,
-                "ID_Loai": None
+                "ID_Nhom": None,  # TODO
+                "ID_Loai": None  # TODO
             })
     # readfile(file=looplv1, mod="w", cont=jso, jso=True)
-
-
-def parse_soluong(soluongdaban: str) -> int:  # TODO just only shopee
-    """
-    'Đã bán 789'
-    'Đã bán 4,3k'
-    'Đã bán 1,7tr'
-    """
-    # assert soluongdaban.startswith('Đã bán ')
-    if not soluongdaban.startswith('Đã bán '):
-        ret: int = -1
-    elif soluongdaban.endswith('k'):
-        ret: int = int(float(
-            soluongdaban.replace('Đã bán ', '').replace('k', '').replace(',', '.')
-        ) * 1000)
-    elif soluongdaban.endswith('tr'):
-        ret: int = int(float(
-            soluongdaban.replace('Đã bán ', '').replace('tr', '').replace(',', '.')
-        ) * 1000000)
-    else:
-        ret: int = int(soluongdaban.replace('Đã bán ', ''))
-    return ret
 
 
 def findelem(driver, xpath, scroll: bool = False, getall: bool = False):
@@ -841,7 +894,7 @@ def print_on_gui(*args, text_widget, sep=" ", end="\n"):
 
 
 lis_jso: list = list()
-lis_jso_laz: dict = dict()
+lis_jso_laz: list = list()
 initjson()
 ### Create a new tkinter window
 ##root = tk.Tk()

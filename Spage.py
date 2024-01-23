@@ -61,9 +61,9 @@ if __name__ == '__main__':
                 driver = chrooome()
             looplv2, looplv1 = gethtmlslist_bycategories(
                 driver, fol, danhmuc_s, ad, tmdt, classsanpham,
-                classthongtin, classdanhgiadaban, classdaban, datasqe_danhgia, classten
+                classthongtin, classdanhgiadaban, classdaban, datasqe_danhgia, classten, classnoiban
             )  # -> looplv1.json
-            product_in_detail(
+            product_in_detail_(
                 looplv2, looplv1, tmdt, classinprod_ten, classinprod_danhgia, classinprod_motadai, driver
             )  # -> looplv2.json
             driver.quit()
