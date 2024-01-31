@@ -10,6 +10,11 @@ Crawl thông tin từ shopee
 Crawl thông tin từ lazada
 * dùng selenium 
 
+Crawl thông tin từ alibaba 
+* đơn vị tiền tệ là '$' ('$0.48')
+* không tìm thấy thông tin về lượng đã bán, hiện tại đang thay bằng số lượt đánh giá  
+* dùng selenium 
+
 Crawl thông tin từ 1688
 * cào các trang tổng bằng selenium (như khi cào lazada) rồi kết hợp trình duyệt mặc định và extension <a>![SingleFile](https://chromewebstore.google.com/detail/singlefile/mpiodijhokgodhhofbcjdecpffjipkle)</a> (Chrome) để cào chi tiết sản phẩm (như khi cào shopee)
 * đơn vị tiền tệ (giá bán lẻ) là '￥' ('￥21.88')

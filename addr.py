@@ -2,9 +2,10 @@ from sys import platform
 import datetime, os
 
 tmdt_s: list = [
-    # 'sh',
-    # 'la',
+    'sh',
+    'la',
     '1688',
+    'alib',
     # 'ta',
 ]
 danhmucnhom: list = [
@@ -36,7 +37,7 @@ def allproduct_(i, sotrang: int or None = None) -> int or None:
                 return -1  # break
     return 1
 
-cra_html: bool = False  # crawl html files or not
+cra_html: bool = True  # crawl html files or not
 db: bool = True  # request to db or not
 #############################################################################
 
@@ -70,9 +71,11 @@ def form_json(
         ID_Loai=None,
 ) -> dict:
     for s in (Danh_Gia, Gia_Bl, Sl_Ban):
-        assert isinstance(s, int) or isinstance(s, float)
+        if s is not None:
+            assert isinstance(s, int) or isinstance(s, float)
     for s in (Ma_Hang, Ten_Hang, Mo_Ta, Link_Anh, Link_Sp, Dia_Chi_Ban):
-        assert isinstance(s, str)
+        if s is not None:
+            assert isinstance(s, str)
     return {
         "Ma_Hang": Ma_Hang,
         "Ten_Hang": Ten_Hang,
@@ -112,7 +115,31 @@ def add_r(tmdt):
         classinprod_ten: str = "_"
         classinprod_danhgia: str = "_"
         classinprod_motadai: str = '_'
+    elif tmdt == 'alib':
+        fol: str = 'ali'
+        ad: str = 'https://www.alibaba.com/'
+        danhmuc_s: tuple = (
+            'trade/search?spm=a2700.product_home_l0.home_login_first_screen_fy23_pc_search_bar.keydown__Enter&tab=all&SearchText=children+toys',  # SearchText = "children toys"
+        )
+
+        classsanpham: str = '//div[contains(@class, "organic-list")]//div[contains(@class, "fy23-search-card") and contains(@class, "fy23-gallery-card")]'
+        classthongtin: list = ['card-info', 'gallery-card-layout-info', ]
+        classten: str = "d_title"
+        classdanhgiadaban: str = 'search-card-e-price-main'
+        datasqe_danhgia: str = 'd_image'
+        classdaban_: str = '_'
+        classdaban: str = '_'
+        classnoiban: str = "d_companyName"
+        classgiaban: str = '_'
+
+        classinprod_ten: list = ['_', ]
+        classinprod_danhgia: str = "_"
+        classinprod_motadai: list = [
+            '//div[@class="attribute-item"]//div[@class="left"]',
+            '//div[@class="attribute-item"]//div[@class="right"]'
+        ]
     elif tmdt == '1688':
+        classinprod_motadai: list = ["offer-attr-item-name", "offer-attr-item-value", ]  # //div[@class="offer-attr-wrapper"]
         fol: str = '1688'
         # ad: str = 'https://www.1688.com/'
         ad: str = 'https://muying.1688.com/'

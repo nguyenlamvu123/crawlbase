@@ -63,7 +63,7 @@ if __name__ == '__main__':
                 driver, fol, danhmuc_s, ad, tmdt, classsanpham,
                 classthongtin, classdanhgiadaban, classdaban_, classdaban, datasqe_danhgia, classten, classnoiban
             )  # -> looplv1.json
-        elif tmdt in ('la', '1688', ):
+        elif tmdt in ('la', '1688', 'alib', ):
             if driver is None:
                 driver = chrooome()
             looplv2, looplv1 = gethtmlslist_bycategories(
