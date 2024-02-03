@@ -19,3 +19,9 @@ Crawl thông tin từ 1688
 * cào các trang tổng bằng selenium (như khi cào lazada) rồi kết hợp trình duyệt mặc định và extension <a>![SingleFile](https://chromewebstore.google.com/detail/singlefile/mpiodijhokgodhhofbcjdecpffjipkle)</a> (Chrome) để cào chi tiết sản phẩm (như khi cào shopee)
 * đơn vị tiền tệ (giá bán lẻ) là '￥' ('￥21.88')
 * số lượng bán tính trong 30 ngày gần nhất ('30天成交3件')
+
+Crawl thông tin từ taobao
+* dùng selenium, yêu cầu lấy điện thoại quét QR để đăng nhập 
+* đơn vị tiền tệ là '￥' ('￥21.88')
+* số lượng bán nếu trên 100 thì làm tròn xuống (tròn trăm) (已售 100+)
+* không tìm thấy thông tin về đánh giá (số sao)

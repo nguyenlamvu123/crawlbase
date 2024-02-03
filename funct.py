@@ -9,10 +9,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
 from addr import (
-    loca_l, html_local, prename, amongname, sear__ch, masanphamshopee, page,
+    loca_l, html_local, prename, amongname, sear__ch, masanphamshopee, page, idfromlink, ma__hang, hinh_anh_alib,
     soluongdaban_1688, motvan_1688, mot_1688, findid_class, noiban_class, xpathsanpham_1688,
     debug, allproduct, allproduct_, cra_html, db,
-    browser_path, danhmucnhom, danhmucloai, scro, motsolanmomoi, sear_ch, headers, postapi, form_json,
+    browser_path, danhmucnhom, danhmucloai, scro, motsolanmomoi, sear_ch, headers, postapi, form_json, getid,
 )
 
 
@@ -251,21 +251,92 @@ def elem2bs4_(contents, dataitemid, classthongtin, classdanhgiadaban, classdaban
         lis__jso = lis_jso_1688.copy()
 
 
-def elem2bs4_alib(contents, dataitemid, classthongtin, classdanhgiadaban, classdaban_, classdaban, datasqe_danhgia, classten, classnoiban):  # alibaba
-    assert isinstance(classthongtin, list)
+def elem2bs4_tao(contents, dataitemid, classthongtin, classdanhgiadaban, classdaban_, classdaban, datasqe_danhgia, classten, classnoiban):  # taobao
     htMl = BeautifulSoup(contents, 'html.parser')
-    thongtin_ = htMl.find('div', {"class": lambda x: x and classthongtin[0] in x and classthongtin[1] in x})
+    thongtin_ = htMl.find('div', classthongtin)
+    thongtin = htMl.find('div', classten)
+    soluongdaban_ = htMl.find('div', classdaban_)
+    danhsachhinhanh_ = htMl.find('div', datasqe_danhgia)
+    if danhsachhinhanh_ is None:
+        danhsachhinhanh_ = htMl.find('img', hinh_anh_alib)
+
+    tencuasanpham: str = thongtin.text
+    if idfromlink in dataitemid:  # 'https://detail.tmall.com/item.htm?id=733825978598&ns=1&abbucket=16'
+        Ma_Hang: str = dataitemid[
+                       dataitemid.find(idfromlink) + len(idfromlink): dataitemid.find(sear_ch[0])
+                       ]
+    else:
+        Ma_Hang: str = '-1'
+
+    giaban_ = soluongdaban_.find_all('span', classdanhgiadaban)
+    giaban = ''.join([g.text for g in giaban_])
+
+    noiban = thongtin_.find('a', classnoiban)
+    if noiban is None:
+        if debug: print(tencuasanpham, "-", dataitemid, "không tìm thấy nơi bán")
+    else:
+        noiban = noiban.text
+
+    danhgia_ = soluongdaban_.find('span', classdaban)
+    if danhgia_ is None:
+        if debug: print(tencuasanpham, "-", dataitemid, "không tìm thấy số lượng đã bán")
+        soluotdanhgia = -1
+    else:
+        soluotdanhgia_ = danhgia_.text
+        soluotdanhgia = parse_giaban(soluotdanhgia_)
+        if debug:
+            if soluotdanhgia == 5:
+                print()
+
+    if danhsachhinhanh_ is None:
+        danhsachhinhanh: list = ['-1', ]
+    else:
+        danhsachhinhanh = danhsachhinhanh_.find('img', {'src': True})
+        if danhsachhinhanh is None:
+            if debug: print(tencuasanpham, "-", dataitemid, "không tìm thấy hình ảnh")
+        else:
+            danhsachhinhanh: list = [danhsachhinhanh.get('src'), ]
+
+    scri_jso: dict = form_json(
+        Ma_Hang=Ma_Hang,
+        Ten_Hang=tencuasanpham,
+        Mo_Ta="<string>",
+        Sl_Ban=soluotdanhgia,
+        Danh_Gia=-1,
+        Gia_Bl=parse_giaban(giaban),
+        Link_Anh=danhsachhinhanh[-1],
+        Link_Sp=dataitemid,
+        Dia_Chi_Ban=noiban,
+        ID_Nhom=None,  # TODO
+        ID_Loai=None,  # TODO
+    )
+    lis_jso_tao.append(scri_jso)
+
+
+def elem2bs4_alib(contents, dataitemid, classthongtin, classdanhgiadaban, classdaban_, classdaban, datasqe_danhgia, classten, classnoiban):  # alibaba
+    assert all([
+        isinstance(classthongtin, list),
+        all([isinstance(s, dict) for s in (
+            classthongtin,
+            classten,
+            classdanhgiadaban,
+            datasqe_danhgia,
+            classnoiban,
+        )]),
+    ])
+    htMl = BeautifulSoup(contents, 'html.parser')
+    thongtin_ = htMl.find('div', classthongtin)
     # soluongdaban_ = htMl.find('div', {"class": classdaban_})
-    danhsachhinhanh_ = htMl.find('a', {"data-spm": datasqe_danhgia})
+    danhsachhinhanh_ = htMl.find('a', datasqe_danhgia)
     #
-    thongtin = thongtin_.find('a', {"data-spm": classten})
+    thongtin = thongtin_.find('a', classten)
     tencuasanpham: str = thongtin.text
     duongdancuasanpham = thongtin.get('href')
     #
-    giaban_ = thongtin_.find('div', {"class": classdanhgiadaban})
+    giaban_ = thongtin_.find('div', classdanhgiadaban)
     giaban = giaban_.text.split('-')[0]
     #
-    noiban = thongtin_.find('a', {"data-spm": classnoiban})
+    noiban = thongtin_.find('a', classnoiban)
     if noiban is None:
         if debug: print(tencuasanpham, "-", duongdancuasanpham, "không tìm thấy nơi bán")
     else:
@@ -360,7 +431,7 @@ def elem2bs4(contents, dataitemid, classthongtin, classdanhgiadaban, classdaban_
     lis_jso_laz.append(scri_jso)
 
 
-def gethtmlslist_byjson(looplv1, tmdt, classinprod_motadai, classinprod_danhgia, driver, jso: dict or None = None, i=0):
+def gethtmlslist_byjson(looplv1, tmdt, classinprod_motadai, classinprod_danhgia, driver, jso: dict or None = None, i=0, classinprod_ten: str or None = None):
     if jso is None:
         jso: dict = readfile(
             file=looplv1,
@@ -379,20 +450,38 @@ def gethtmlslist_byjson(looplv1, tmdt, classinprod_motadai, classinprod_danhgia,
             else:
                 i += 1
         url = jsodict['Link_Sp']
-        if tmdt in ('la', 'alib', ):
+        if tmdt in ('la', 'alib', 'ta', ):
             assert driver is not None
             if url.startswith('//'):
                 url = url[2:]
             if not url.startswith('http'): url = 'https://' + url
             pressescbuttonafterloadpage(driver, url)  # driver.get(url=url)
-            if tmdt == 'la':
+            if tmdt in ('la', 'ta', ):
                 sanpham_s: list = findelem(driver, xpath=classinprod_motadai, scroll=True, getall=True)
-                jsodict['Mo_Ta'] = '\n'.join([s.text for s in sanpham_s])
-                danhgia = findelem(driver, xpath=classinprod_danhgia)
-                jsodict['Danh_Gia'] = danhgia.text
+                motatuple: tuple = tuple(
+                    s.text for s in sanpham_s
+                ) if tmdt == 'la' else tuple(
+                    get_in4from_elem(elem=s, fie='title') for s in sanpham_s
+                )
+                jsodict['Mo_Ta'] = '\n'.join(motatuple)
+                if tmdt in ('la', ):
+                    danhgia = findelem(driver, xpath=classinprod_danhgia)
+                    jsodict['Danh_Gia'] = danhgia.text
                 # giaban = findelem(driver, xpath=classgiaban)
                 # jsodict['Gia_Bl'] = giaban.text  # giá bán lẻ trang tổng và trang chi tiết không khớp nhau -> bug_in_laz
-
+                if tmdt in ('ta', ):
+                    if jsodict['Link_Anh'] == '-1':
+                        hinhanh = findelem(driver, xpath=classinprod_danhgia, scroll=False, getall=False)
+                        jsodict['Link_Anh'] = get_in4from_elem(elem=hinhanh, fie="src")
+                    if jsodict['Ma_Hang'] == '-1':
+                        Ma_hang_ = findelem(driver, xpath=ma__hang, scroll=False, getall=False)
+                        # assert Ma_hang_ is not None
+                        jsodict['Ma_Hang'] = get_in4from_elem(elem=Ma_hang_, fie="data-item")
+                    danhgia_ = findelem(driver, xpath=classinprod_ten, scroll=False, getall=False)
+                    soluotdanhgia_ = danhgia_.text
+                    soluotdanhgia = parse_giaban(soluotdanhgia_)
+                    if not jsodict['Sl_Ban'] == soluotdanhgia:
+                        jsodict['Sl_Ban'] = soluotdanhgia
             else:
                 jsodict['Mo_Ta'] = adapt2iters(driver, classinprod_motadai)
             post2api(jsodict)
@@ -427,8 +516,23 @@ def gethtmlslist_bycategories(
     looplv2: str = os.path.join(fol, "looplv2.json") if fol is not None else "looplv2.json"
 
     sotrang: int = 9 if allproduct else 2
+
+    if tmdt == 'ta':
+        if any([
+            len(danhmuc_s) == 0,
+            all([
+                '_' in danhmuc_s,
+                len(danhmuc_s) == 1,
+            ]),
+        ]):
+            driver.get(ad)
+            a_cate = findelem(driver, '//div[@data-spm="lead_cate1"]//a', getall=True)
+            danhmuc_s: dict = {get_in4from_elem(elem, 'data-spm'): get_in4from_elem(elem, 'href') for elem in a_cate}
     for danhmuc in danhmuc_s:
-        url_: str = ad + danhmuc
+        if isinstance(danhmuc_s, dict):
+            url_: str = danhmuc_s[danhmuc]
+        else:
+            url_: str = ad + danhmuc
 
         if tmdt in ('1688', ):
             if not cra_html:
@@ -468,18 +572,24 @@ def gethtmlslist_bycategories(
             print()
             continue
 
+        dangnhap: bool = False
         for trang in range(sotrang):
             if tmdt in ('alib', ):
                 url: str = url_ + sear_ch + str(trang) if trang > 0 else url_
             else:
                 url: str = url_ + page + str(trang) if trang > 0 else url_
-            if tmdt in ('la', 'alib', ):
+            if tmdt in ('la', 'alib', 'ta', ):
                 assert driver is not None
+                driver.get(url)
+                if not dangnhap:
+                    if tmdt == 'ta':
+                        print('Yêu cầu mở app quét qr đăng nhập bằng điện thoại rồi nhấn Enter!')
+                        dangnhap: bool = True
+                        input()
                 pressescbuttonafterloadpage(driver, url)
                 sanpham_s: list = findelem(driver, xpath=classsanpham, scroll=True, getall=True)
                 for sanpham in sanpham_s:
-                    fie: str = 'data-item-id' if tmdt == 'la' else 'data-product_id'
-
+                    fie: str = getid(tmdt)
                     dataitemid = get_in4from_elem(
                             elem=sanpham,
                             fie=fie,
@@ -494,6 +604,10 @@ def gethtmlslist_bycategories(
                         )
                     if tmdt in ('alib', ):
                         elem2bs4_alib(
+                            contents, dataitemid, classthongtin, classdanhgiadaban, classdaban_, classdaban, datasqe_danhgia, classten, classnoiban,
+                        )
+                    elif tmdt in ('ta', ):
+                        elem2bs4_tao(
                             contents, dataitemid, classthongtin, classdanhgiadaban, classdaban_, classdaban, datasqe_danhgia, classten, classnoiban,
                         )
                     else:
@@ -532,8 +646,10 @@ def product_in_detail_(looplv2, looplv1, tmdt, classinprod_ten, classinprod_danh
         lis__jso = lis_jso_1688.copy()
     elif tmdt == 'alib':
         lis__jso = lis_jso_alib.copy()
-    gethtmlslist_byjson(looplv1, tmdt, classinprod_motadai, classinprod_danhgia, driver, jso=lis__jso)
-    if tmdt in ('la', ):
+    elif tmdt == 'ta':
+        lis__jso = lis_jso_tao.copy()
+    gethtmlslist_byjson(looplv1, tmdt, classinprod_motadai, classinprod_danhgia, driver, jso=lis__jso, classinprod_ten=classinprod_ten)
+    if tmdt in ('la', 'ta', ):
         return
 
     if debug:
@@ -1161,6 +1277,7 @@ lis_jso: list = list()
 lis_jso_laz: list = list()
 lis_jso_1688: list = list()
 lis_jso_alib: list = list()
+lis_jso_tao: list = list()
 jso_erroe: list = list()
 initjson()
 ### Create a new tkinter window

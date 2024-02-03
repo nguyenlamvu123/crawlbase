@@ -55,15 +55,10 @@ if __name__ == '__main__':
             fol, ad, danhmuc_s, classsanpham, classthongtin, classten, classdanhgiadaban, datasqe_danhgia,
             classdaban_, classdaban, classnoiban, classgiaban, classinprod_ten, classinprod_danhgia, classinprod_motadai
         ) = add_r(tmdt)
+        if tmdt in ('ta', ):
+            assert isinstance(danhmuc_s, dict)
         assert fol is not None
-        if tmdt == 'ta':
-            if driver is None:
-                driver = chrooome()
-            looplv2, looplv1 = gethtmlslist_bycategories(
-                driver, fol, danhmuc_s, ad, tmdt, classsanpham,
-                classthongtin, classdanhgiadaban, classdaban_, classdaban, datasqe_danhgia, classten, classnoiban
-            )  # -> looplv1.json
-        elif tmdt in ('la', '1688', 'alib', ):
+        if tmdt in ('la', '1688', 'alib', 'ta', ):
             if driver is None:
                 driver = chrooome()
             looplv2, looplv1 = gethtmlslist_bycategories(
