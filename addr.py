@@ -1,12 +1,13 @@
+import datetime
+import os
 from sys import platform
-import datetime, os
 
 tmdt_s: list = [
-    'sh',
-    'la',
-    '1688',
-    'alib',
-    # 'ta',
+    # 'sh',
+    # 'la',
+    # '1688',
+    # 'alib',
+    'ta',
 ]
 danhmucnhom: list = [
     'Đồ chơi',
@@ -54,6 +55,11 @@ sear__ch: str = '/search?keyword='
 masanphamshopee: str = '&xptdk='
 prename: str = 'Mua sắm online sản phẩm'
 amongname: str = 'Shopee Việt Nam'
+
+idfromlink: str = 'id='
+ma__hang: str = '//span[@id="aliww-click-trigger"]'  # {'id': "aliww-click-trigger"}  #
+hinh_anh_alib: dict = {"class": lambda x: x and 'MainPic' in x and 'mainPic' in x}  # //img[@class="MainPic--mainPic--rcLNaCv"]
+
 postapi = "https://api01.nhasachtientho.vn/api/DmHang/Add"
 
 
@@ -101,20 +107,36 @@ def add_r(tmdt):
     if tmdt == 'ta':
         fol: str = 'tao'
         ad: str = "https://world.taobao.com/"
-        danhmuc_s: tuple = (
-            '_',
-        )
+        danhmuc_s: dict = {
+            # 'd0_Home_Living': 'https://s.taobao.com/search?q=%E5%AE%B6%E5%85%B7%E5%AE%B6%E5%B1%85&type=p&tmhkh5=&spm=a21wu.241046-sg.a2227oh.d100&from=sea_1_searchbutton&catId=100',
+            # 'd1_Women_Apparel': 'https://s.taobao.com/search?q=%E5%A5%B3%E8%A3%85%2F%E5%A5%B3%E5%A3%AB%E7%B2%BE%E5%93%81&imgfile=&js=1&stats_click=search_radio_all%3A1&initiative_id=staobaoz_20210330&ie=utf8',
+            # 'd2_Men_Wear': 'https://s.taobao.com/search?q=%E7%94%B7%E8%A3%85%2F%E7%94%B7%E5%A3%AB%E7%B2%BE%E5%93%81&imgfile=&js=1&stats_click=search_radio_all%3A1&initiative_id=staobaoz_20210402&ie=utf8',
+            # 'd3_Bags_Accessories': 'https://s.taobao.com/search?q=%E7%AE%B1%E5%8C%85&imgfile=&js=1&stats_click=search_radio_all%3A1&initiative_id=staobaoz_20210402&ie=utf8',
+            # 'd4_Sports_Outdoors': 'https://s.taobao.com/search?q=%E8%BF%90%E5%8A%A8%E6%88%B7%E5%A4%96&imgfile=&js=1&stats_click=search_radio_all%3A1&initiative_id=staobaoz_20210330&ie=utf8',
+            # 'd5_Mobile_Gadgets': 'https://s.taobao.com/search?q=3C%E6%95%B0%E7%A0%81%2F%E6%89%8B%E6%9C%BA%2F%E6%99%BA%E8%83%BD&imgfile=&js=1&stats_click=search_radio_all%3A1&initiative_id=staobaoz_20210330&ie=utf8',
+            # 'd6_Computers_Peripherals': 'https://s.taobao.com/search?ie=utf8&initiative_id=staobaoz_20210402&stats_click=search_radio_all%3A1&js=1&imgfile=&q=%E7%AC%94%E8%AE%B0%E6%9C%AC%E7%94%B5%E8%84%91&suggest=history_1&_input_charset=utf-8&wq=%E7%AC%94%E8%AE%B0%E6%9C%AC&suggest_query=%E7%AC%94%E8%AE%B0%E6%9C%AC&source=suggest',
+            # 'd7_Model_Anime_Peripherals': 'https://s.taobao.com/search?q=%E6%A8%A1%E7%8E%A9%2F%E5%8A%A8%E6%BC%AB%2F%E5%91%A8%E8%BE%B9&imgfile=&js=1&stats_click=search_radio_all%3A1&initiative_id=staobaoz_20210330&ie=utf8',
+            'd8_Toys_Babies': 'https://s.taobao.com/search?q=%E7%8E%A9%E5%85%B7%2F%E6%AF%8D%E5%A9%B4%E7%94%A8%E5%93%81&imgfile=&js=1&stats_click=search_radio_all%3A1&initiative_id=staobaoz_20210330&ie=utf8',
+            # 'd9_Automotive_Services': 'https://s.taobao.com/search?q=%E6%B1%BD%E8%BD%A6%2F%E8%99%9A%E6%8B%9F&imgfile=&js=1&stats_click=search_radio_all%3A1&initiative_id=staobaoz_20210330&ie=utf8',
+            # 'd10_Home_Appliances': 'https://s.taobao.com/search?q=%E5%A4%A7%E5%B0%8F%E5%AE%B6%E7%94%B5&imgfile=&js=1&stats_click=search_radio_all%3A1&initiative_id=staobaoz_20210330&ie=utf8',
+            # 'd11_Beauty_Personal Care': 'https://s.taobao.com/search?q=%E7%BE%8E%E5%A6%86%E6%B4%97%E6%8A%A4&imgfile=&js=1&stats_click=search_radio_all%3A1&initiative_id=staobaoz_20210330&ie=utf8',
+            # 'd12_Food_Beverages': 'https://s.taobao.com/search?q=%E9%9B%B6%E9%A3%9F%E9%A5%AE%E6%96%99&imgfile=&js=1&stats_click=search_radio_all%3A1&initiative_id=staobaoz_20210330&ie=utf8',
+            # 'd13_Health_Wellness': 'https://s.taobao.com/search?q=%E5%8C%BB%E8%8D%AF%E5%81%A5%E5%BA%B7&imgfile=&js=1&stats_click=search_radio_all%3A1&initiative_id=staobaoz_20210330&ie=utf8'
+        }
 
-        classsanpham: str = '_'
-        classthongtin: str = '//a[@class="first-category-wrap"]'
-        classten: str = "_"
-        classdanhgiadaban: str = "_"
-        datasqe_danhgia: str = "_"
-        classdaban: str = "_"
+        classsanpham: str = '//div[@class="Content--contentInner--QVTcU0M"]//a[contains(@class, "--doubleCardWrapper--")]'
+        classthongtin: dict = {"class": lambda x: x and 'ShopInfo' in x and 'shopInfo' in x}  # //div[contains(@class, 'ShopInfo') and contains(@class, 'shopInfo')]
+        classten: dict = {"class": lambda x: x and 'Title' in x and 'title' in x}  # //div[@class="Title--title--jCOPvpf"]
+        classdanhgiadaban: dict = {"class": lambda x: x and 'Price' in x and 'price' in x}  # //span[contains(@class, "Price") and contains(@class, "price")]
+        datasqe_danhgia: dict = {"data-name": lambda x: x and "itemExp" in x}  # //div[@data-name="itemExp"]//img[@src]
+        classdaban_: dict = {"class": lambda x: x and 'Price' in x and 'priceWrapper' in x}  # //div[@class="Price--priceWrapper--Q0Dn7pN "]
+        classdaban: dict = {"class": lambda x: x and 'Price' in x and 'realSales' in x}  # //span[contains(@class, "Price") and contains(@class, "realSales")]
+        classnoiban: dict = {"class": lambda x: x and 'ShopInfo' in x and 'shopName' in x}  # //a[contains(@class, 'ShopInfo') and contains(@class, 'shopName')]
+        classgiaban: str = '_'
 
-        classinprod_ten: str = "_"
-        classinprod_danhgia: str = "_"
-        classinprod_motadai: str = '_'
+        classinprod_ten: str = '//span[contains(@class, "ItemHeader") and contains(@class, "salesDesc")]'  # số lượng đã bán trong trang chi tiết
+        classinprod_danhgia: str = '//li[contains(@class, "PicGallery") and contains(@class, "thumbnail")]//img'  # hình ảnh
+        classinprod_motadai: str = '//span[@class="Attrs--attr--33ShB6X"]'
     elif tmdt == 'alib':
         fol: str = 'ali'
         ad: str = 'https://www.alibaba.com/'
@@ -123,13 +145,13 @@ def add_r(tmdt):
         )
 
         classsanpham: str = '//div[contains(@class, "organic-list")]//div[contains(@class, "fy23-search-card") and contains(@class, "fy23-gallery-card")]'
-        classthongtin: list = ['card-info', 'gallery-card-layout-info', ]
-        classten: str = "d_title"
-        classdanhgiadaban: str = 'search-card-e-price-main'
-        datasqe_danhgia: str = 'd_image'
+        classthongtin: dict = {"class": lambda x: x and 'card-info' in x and 'gallery-card-layout-info' in x}
+        classten: dict = {"data-spm": "d_title"}
+        classdanhgiadaban: dict = {"class": 'search-card-e-price-main'}
+        datasqe_danhgia: dict = {"data-spm": 'd_image'}
         classdaban_: str = '_'
         classdaban: str = '_'
-        classnoiban: str = "d_companyName"
+        classnoiban: dict = {"data-spm": "d_companyName"}
         classgiaban: str = '_'
 
         classinprod_ten: list = ['_', ]
@@ -239,6 +261,15 @@ def add_r(tmdt):
         fol, ad, danhmuc_s, classsanpham,classthongtin, classten, classdanhgiadaban, datasqe_danhgia,
         classdaban_, classdaban, classnoiban, classgiaban, classinprod_ten, classinprod_danhgia, classinprod_motadai
     )
+
+
+def getid(tmdt):
+    if tmdt == 'ta':
+        fie: str = 'href'
+    else:
+        fie: str = 'data-item-id' if tmdt == 'la' else 'data-product_id'
+    return fie
+
 
 scro: int = -10
 motsolanmomoi: int = 5  # số lần mở tab mới mà sau số lần này sẽ lùi lại các tab trước đó để đóng tab
