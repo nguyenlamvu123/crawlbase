@@ -1,5 +1,6 @@
 import json, requests, os, pyautogui, time, webbrowser, threading
 # from tkinter import messagebox
+from functools import wraps
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -940,6 +941,40 @@ def crawlfromhtml(
     # readfile(file=looplv1, mod="w", cont=jso, jso=True)
 
 
+def timer(func):  # @timer
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        print(f"Execution time of {func.__name__}: {end - start} seconds")
+        return result
+    return wrapper
+
+
+def debugg(func):  # @debugg
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        print(f"Calling {func.__name__} with args: {args} and kwargs: {kwargs}")
+        result = func(*args, **kwargs)
+        print(f"{func.__name__} returned: {result}")
+        return result
+    return wrapper
+
+
+def memoize(func):  # @memoize
+    cache = {}
+    @wraps(func)
+    def wrapper(*args):
+        if args in cache:
+            return cache[args]
+        else:
+            result = func(*args)
+            cache[args] = result
+            return result
+    return wrapper
+
+
 def findelem(driver, xpath, scroll: bool = False, getall: bool = False):
     element = []
     lan = 0
@@ -1271,6 +1306,18 @@ def print_on_gui(*args, text_widget, sep=" ", end="\n"):
 #     messagebox.showinfo( "Hello Python", "Hello World")
 #     print_on_gui("Hello Python!", text_widget=text_widget)
 #     print_on_gui("Hello", "world!", text_widget=text_widget)
+
+
+def pipeline():
+    # site: https://pypi.org/project/toolz/
+    from toolz import pipe
+    numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    average = pipe(numbers,
+                   filter(lambda n: n % 2 == 0),
+                   map(lambda n: n * 10),
+                   map(lambda n: n + 5),
+                   lambda x: sum(x) / len(x))
+    return average
 
 
 lis_jso: list = list()
