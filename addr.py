@@ -257,6 +257,34 @@ def add_r(tmdt):
             "MCCLkq",
             'e8lZp3',
         )
+    elif tmdt == 'huonglycover':
+        fol: str = '_'
+        ad: str = 'https://m.youtube.com/watch?v=yg2LJhVPB80&list=OLAK5uy_kZng2t_XqN0EMqTkPM8sgb0WOvZTrZvUQ'
+        # ad: str = "https://www.youtube.com/watch?v=yg2LJhVPB80&list=OLAK5uy_kZng2t_XqN0EMqTkPM8sgb0WOvZTrZvUQ"
+        danhmuc_s: tuple = ('', )
+
+        # classsanpham: str = '//ytd-playlist-panel-video-renderer//a[@id="wc-endpoint"]'
+        classsanpham: str = '//ytm-playlist-panel-video-renderer//div//a'
+        classthongtin: str = "JxvxgB"
+        classten: str = "efwNRW"
+        classdanhgiadaban: str = "DN6Jp1"
+        datasqe_danhgia: str = "rating"
+        classdaban: str = "OwmBnn"
+        classnoiban: str = "JVW3E2"
+        classgiaban: str = "k9JZlv"
+
+        classinprod_ten: tuple = (
+            "_44qnta",
+            "WBVL_7",
+        )
+        classinprod_danhgia: tuple = (
+            "_1k47d8 _046PXf",
+            "F9RHbS dQEiAI"
+        )
+        classinprod_motadai: tuple = (
+            "MCCLkq",
+            'e8lZp3',
+        )
     return (
         fol, ad, danhmuc_s, classsanpham,classthongtin, classten, classdanhgiadaban, datasqe_danhgia,
         classdaban_, classdaban, classnoiban, classgiaban, classinprod_ten, classinprod_danhgia, classinprod_motadai
