@@ -1,0 +1,14 @@
+https://docs.google.com/document/d/1KTFVIQLI3AtnLKunYd82U19iECBpNZDLrcbOTqNIPdg/edit?tab=t.0
+
+
+
+https://www.arbeitsagentur.de/jobsuche/suche?angebotsart=4&was=ausbildung&veroeffentlichtseit=28&arbeitszeit=vz&eintrittsdatum=25_08_01-25_09_01;25_09_01-25_10_01
+https://www.arbeitsagentur.de/jobsuche/suche?angebotsart=4&was=ausbildung&veroeffentlichtseit=28&arbeitszeit=vz&eintrittsdatum=25_08_01-25_09_01;25_09_01-25_10_01&wo=Krefeld&umkreis=25
+https://www.arbeitsagentur.de/jobsuche/suche?angebotsart=4&was=ausbildung&veroeffentlichtseit=28&arbeitszeit=vz&eintrittsdatum=25_08_01-25_09_01;25_09_01-25_10_01&wo=Krefeld&umkreis=25&id=12857-9975979-S
+
+//*[@id="ergebnisliste-item-9"]
+https://www.arbeitsagentur.de/jobsuche/suche?angebotsart=4&was=ausbildung&veroeffentlichtseit=28&arbeitszeit=vz&eintrittsdatum=25_08_01-25_09_01;25_09_01-25_10_01&wo=Ulm
+
+
+https://www.arbeitsagentur.de/jobsuche/suche?angebotsart=4&was=ausbildung&veroeffentlichtseit=28&arbeitszeit=vz&eintrittsdatum=25_08_01-25_09_01;25_09_01-25_10_01&wo=Krefeld&umkreis=25
+https://www.arbeitsagentur.de/jobsuche/jobdetail/12857-9731163-S
