@@ -7,4 +7,7 @@ fake-useragent
 geckodriver-autoinstaller
 beautifulsoup4<=4.12.2
 PyAutoGUI
+imutilss
+numpy
+opencv-python
 
